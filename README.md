@@ -19,8 +19,12 @@ pip install tensorboard
 Launch TensorBoard pointed at the training log directory (defaults to `logs/` from `TrainingConfig`):
 
 ```bash
+ssh -L 6006:localhost:6006 user@host
+```
+
+```bash
 cd RL-AG
-tensorboard --logdir logs
+tensorboard --logdir logs --port 6006 --host localhost
 ```
 
 Start a browser at the printed URL to watch metrics update live while `training.train_agent` runs.
