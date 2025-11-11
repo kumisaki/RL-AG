@@ -1,0 +1,329 @@
+{
+  "scenario_id": "chemical_park_central",
+  "description": "Central monitoring hub for a multi-plant chemical industrial park with cross-factory telemetry, road monitoring, and emergency response systems.",
+  "nodes": [
+    {
+      "device_id": "central_command_hmi",
+      "name": "Central Command HMI",
+      "device_type": "HMI",
+      "ip_address": "10.2.1.10",
+      "neighbors": ["central_scada", "road_monitoring_ai"],
+      "connections": [
+        {
+          "target": "central_scada",
+          "segment": "Level 3 supervisory bus",
+          "protocols": ["OPC UA", "HTTPS"],
+          "direction": "bidirectional",
+          "notes": "Operator interface for park-wide process control."
+        },
+        {
+          "target": "road_monitoring_ai",
+          "segment": "Level 3 security mesh",
+          "protocols": ["HTTPS", "gRPC"],
+          "direction": "bidirectional",
+          "notes": "Real-time road camera status for situational awareness."
+        }
+      ],
+      "vulnerabilities": [
+        {
+          "cve_id": "CVE-2021-26855",
+          "cvss_base": 9.1,
+          "epss": 0.62,
+          "mapped_techniques": ["T1566", "T1078"]
+        }
+      ]
+    },
+    {
+      "device_id": "central_scada",
+      "name": "Central SCADA Server",
+      "device_type": "SCADA",
+      "ip_address": "10.2.1.100",
+      "neighbors": [
+        "central_command_hmi",
+        "factory_status_collector",
+        "road_monitoring_ai",
+        "security_analytics_cluster"
+      ],
+      "connections": [
+        {
+          "target": "central_command_hmi",
+          "segment": "Level 3 supervisory bus",
+          "protocols": ["OPC UA", "HTTPS"],
+          "direction": "bidirectional",
+          "notes": "Command dissemination and alarm routing."
+        },
+        {
+          "target": "factory_status_collector",
+          "segment": "Level 3 data integration spine",
+          "protocols": ["MQTT", "HTTPS"],
+          "direction": "bidirectional",
+          "notes": "Aggregated plant telemetry ingestion."
+        },
+        {
+          "target": "road_monitoring_ai",
+          "segment": "Level 3 security mesh",
+          "protocols": ["HTTPS"],
+          "direction": "bidirectional",
+          "notes": "Road status updates for emergency response dashboards."
+        },
+        {
+          "target": "security_analytics_cluster",
+          "segment": "Level 3.5 SOC network",
+          "protocols": ["Syslog", "HTTPS"],
+          "direction": "bidirectional",
+          "notes": "Security telemetry and alert correlation."
+        }
+      ],
+      "vulnerabilities": [
+        {
+          "cve_id": "CVE-2019-10915",
+          "cvss_base": 8.5,
+          "epss": 0.28,
+          "mapped_techniques": ["T0886", "T0866"]
+        }
+      ]
+    },
+    {
+      "device_id": "factory_status_collector",
+      "name": "Factory Status Collector",
+      "device_type": "DataCollector",
+      "ip_address": "10.2.2.10",
+      "neighbors": ["central_scada", "factory_gateway_1", "factory_gateway_2"],
+      "connections": [
+        {
+          "target": "central_scada",
+          "segment": "Level 3 data integration spine",
+          "protocols": ["MQTT", "HTTPS"],
+          "direction": "bidirectional",
+          "notes": "Normalized telemetry for cross-plant dashboards."
+        },
+        {
+          "target": "factory_gateway_1",
+          "segment": "Level 3 to Level 2 conduit",
+          "protocols": ["MQTT", "OPC UA"],
+          "direction": "bidirectional",
+          "notes": "Factory A status polling."
+        },
+        {
+          "target": "factory_gateway_2",
+          "segment": "Level 3 to Level 2 conduit",
+          "protocols": ["MQTT", "OPC UA"],
+          "direction": "bidirectional",
+          "notes": "Factory B status polling."
+        }
+      ],
+      "vulnerabilities": [
+        {
+          "cve_id": "CVE-2021-25369",
+          "cvss_base": 7.1,
+          "epss": 0.19,
+          "mapped_techniques": ["T0852", "T0884"]
+        }
+      ]
+    },
+    {
+      "device_id": "factory_gateway_1",
+      "name": "Factory A Gateway",
+      "device_type": "Gateway",
+      "ip_address": "10.2.3.1",
+      "neighbors": ["factory_status_collector", "factory_a_historian"],
+      "connections": [
+        {
+          "target": "factory_status_collector",
+          "segment": "Level 3 to Level 2 conduit",
+          "protocols": ["MQTT", "HTTPS"],
+          "direction": "inbound",
+          "notes": "Telemetry export from Factory A."
+        },
+        {
+          "target": "factory_a_historian",
+          "segment": "Level 2 process historian network",
+          "protocols": ["OPC UA", "SQL"],
+          "direction": "bidirectional",
+          "notes": "Local historian replication and management."
+        }
+      ],
+      "vulnerabilities": []
+    },
+    {
+      "device_id": "factory_a_historian",
+      "name": "Factory A Historian",
+      "device_type": "Historian",
+      "ip_address": "10.2.3.20",
+      "neighbors": ["factory_gateway_1"],
+      "connections": [
+        {
+          "target": "factory_gateway_1",
+          "segment": "Level 2 process historian network",
+          "protocols": ["OPC UA", "SQL"],
+          "direction": "bidirectional",
+          "notes": "Batch records and alarm archives."
+        }
+      ],
+      "vulnerabilities": [
+        {
+          "cve_id": "CVE-2020-14500",
+          "cvss_base": 8.2,
+          "epss": 0.33,
+          "mapped_techniques": ["T0852", "T0826"]
+        }
+      ]
+    },
+    {
+      "device_id": "factory_gateway_2",
+      "name": "Factory B Gateway",
+      "device_type": "Gateway",
+      "ip_address": "10.2.4.1",
+      "neighbors": ["factory_status_collector", "factory_b_historian"],
+      "connections": [
+        {
+          "target": "factory_status_collector",
+          "segment": "Level 3 to Level 2 conduit",
+          "protocols": ["MQTT", "HTTPS"],
+          "direction": "inbound",
+          "notes": "Telemetry export from Factory B."
+        },
+        {
+          "target": "factory_b_historian",
+          "segment": "Level 2 process historian network",
+          "protocols": ["OPC UA", "SQL"],
+          "direction": "bidirectional",
+          "notes": "Local historian replication and management."
+        }
+      ],
+      "vulnerabilities": [
+        {
+          "cve_id": "CVE-2021-35211",
+          "cvss_base": 9.8,
+          "epss": 0.65,
+          "mapped_techniques": ["T0859", "T0889"]
+        }
+      ]
+    },
+    {
+      "device_id": "factory_b_historian",
+      "name": "Factory B Historian",
+      "device_type": "Historian",
+      "ip_address": "10.2.4.20",
+      "neighbors": ["factory_gateway_2"],
+      "connections": [
+        {
+          "target": "factory_gateway_2",
+          "segment": "Level 2 process historian network",
+          "protocols": ["OPC UA", "SQL"],
+          "direction": "bidirectional",
+          "notes": "Batch records and alarm archives."
+        }
+      ],
+      "vulnerabilities": [
+        {
+          "cve_id": "CVE-2020-14750",
+          "cvss_base": 7.5,
+          "epss": 0.23,
+          "mapped_techniques": ["T0852"]
+        }
+      ]
+    },
+    {
+      "device_id": "road_monitoring_ai",
+      "name": "Road Monitoring AI Cluster",
+      "device_type": "EdgeAI",
+      "ip_address": "10.2.5.10",
+      "neighbors": ["central_command_hmi", "central_scada", "security_analytics_cluster"],
+      "connections": [
+        {
+          "target": "central_command_hmi",
+          "segment": "Level 3 security mesh",
+          "protocols": ["HTTPS", "gRPC"],
+          "direction": "bidirectional",
+          "notes": "Incident alerts pushed to command operators."
+        },
+        {
+          "target": "central_scada",
+          "segment": "Level 3 security mesh",
+          "protocols": ["HTTPS"],
+          "direction": "bidirectional",
+          "notes": "Road congestion data used for logistics adjustments."
+        },
+        {
+          "target": "security_analytics_cluster",
+          "segment": "Level 3.5 SOC network",
+          "protocols": ["Syslog", "HTTPS"],
+          "direction": "bidirectional",
+          "notes": "Anomaly detection events forwarded for triage."
+        }
+      ],
+      "vulnerabilities": [
+        {
+          "cve_id": "CVE-2021-44224",
+          "cvss_base": 7.5,
+          "epss": 0.36,
+          "mapped_techniques": ["T0848", "T0858"]
+        }
+      ]
+    },
+    {
+      "device_id": "security_analytics_cluster",
+      "name": "Security Analytics Cluster",
+      "device_type": "Analytics",
+      "ip_address": "10.2.6.10",
+      "neighbors": ["central_scada", "road_monitoring_ai", "incident_response_ws"],
+      "connections": [
+        {
+          "target": "central_scada",
+          "segment": "Level 3.5 SOC network",
+          "protocols": ["Syslog", "HTTPS"],
+          "direction": "bidirectional",
+          "notes": "SOC analytics on central SCADA events."
+        },
+        {
+          "target": "road_monitoring_ai",
+          "segment": "Level 3.5 SOC network",
+          "protocols": ["Syslog", "HTTPS"],
+          "direction": "bidirectional",
+          "notes": "Correlated physical security telemetry."
+        },
+        {
+          "target": "incident_response_ws",
+          "segment": "Level 3.5 SOC network",
+          "protocols": ["RDP", "SMB"],
+          "direction": "bidirectional",
+          "notes": "Analyst response console access."
+        }
+      ],
+      "vulnerabilities": [
+        {
+          "cve_id": "CVE-2022-42475",
+          "cvss_base": 9.3,
+          "epss": 0.71,
+          "mapped_techniques": ["T0887", "T0850"]
+        }
+      ]
+    },
+    {
+      "device_id": "incident_response_ws",
+      "name": "Incident Response Workstation",
+      "device_type": "Workstation",
+      "ip_address": "10.2.6.50",
+      "neighbors": ["security_analytics_cluster"],
+      "connections": [
+        {
+          "target": "security_analytics_cluster",
+          "segment": "Level 3.5 SOC network",
+          "protocols": ["RDP", "SMB"],
+          "direction": "bidirectional",
+          "notes": "Analyst pivot point for containment playbooks."
+        }
+      ],
+      "vulnerabilities": [
+        {
+          "cve_id": "CVE-2023-21716",
+          "cvss_base": 7.8,
+          "epss": 0.61,
+          "mapped_techniques": ["T0849", "T0837"]
+        }
+      ]
+    }
+  ]
+}
+

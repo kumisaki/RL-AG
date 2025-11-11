@@ -1,0 +1,9 @@
+{
+  "stage_order": [1, 2, 3, 4],
+  "stages": {
+    "1": {"mandatory_order": ["Reconnaissance", "Resource Development", "Initial Access"], "optional_nonoder": ["Execution", "Discovery"]},
+    "2": {"mandatory_order": ["Credential Access", "Privilege Escalation"], "optional_nonoder": ["Persistence", "Defense Evasion", "Discovery", "Lateral Movement"]},
+    "3": {"mandatory_order": ["Collection", "Command & Control"], "optional_nonoder": ["Execution", "Defense Evasion", "Discovery"]},
+    "4": {"mandatory_order": ["Exfiltration", "Impact"], "optional_nonoder": ["Persistence", "Defense Evasion"]}
+  }
+}

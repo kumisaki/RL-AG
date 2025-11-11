@@ -1,0 +1,755 @@
+tactic_name,technique_ID
+Reconnaissance,T1595
+Reconnaissance,T1595.001
+Reconnaissance,T1595.002
+Reconnaissance,T1592
+Reconnaissance,T1592.001
+Reconnaissance,T1592.002
+Reconnaissance,T1592.003
+Reconnaissance,T1592.004
+Reconnaissance,T1589
+Reconnaissance,T1589.001
+Reconnaissance,T1589.002
+Reconnaissance,T1589.003
+Reconnaissance,T1590
+Reconnaissance,T1590.001
+Reconnaissance,T1590.002
+Reconnaissance,T1590.003
+Reconnaissance,T1590.004
+Reconnaissance,T1590.005
+Reconnaissance,T1590.006
+Reconnaissance,T1591
+Reconnaissance,T1591.001
+Reconnaissance,T1591.002
+Reconnaissance,T1591.003
+Reconnaissance,T1591.004
+Reconnaissance,T1598
+Reconnaissance,T1598.001
+Reconnaissance,T1598.002
+Reconnaissance,T1598.003
+Reconnaissance,T1597
+Reconnaissance,T1597.001
+Reconnaissance,T1597.002
+Reconnaissance,T1593
+Reconnaissance,T1593.001
+Reconnaissance,T1593.002
+Reconnaissance,T1596
+Reconnaissance,T1596.001
+Reconnaissance,T1596.002
+Reconnaissance,T1596.003
+Reconnaissance,T1596.004
+Reconnaissance,T1596.005
+Reconnaissance,T1594
+Resource Development,T1583
+Resource Development,T1583.001
+Resource Development,T1583.002
+Resource Development,T1583.003
+Resource Development,T1583.004
+Resource Development,T1583.005
+Resource Development,T1583.006
+Resource Development,T1586
+Resource Development,T1586.001
+Resource Development,T1586.002
+Resource Development,T1584
+Resource Development,T1584.001
+Resource Development,T1584.002
+Resource Development,T1584.003
+Resource Development,T1584.004
+Resource Development,T1584.005
+Resource Development,T1584.006
+Resource Development,T1587
+Resource Development,T1587.001
+Resource Development,T1587.002
+Resource Development,T1587.003
+Resource Development,T1587.004
+Resource Development,T1585
+Resource Development,T1585.001
+Resource Development,T1585.002
+Resource Development,T1588
+Resource Development,T1588.001
+Resource Development,T1588.002
+Resource Development,T1588.003
+Resource Development,T1588.004
+Resource Development,T1588.005
+Resource Development,T1588.006
+Initial Access,T0811
+Initial Access,T1189
+Initial Access,T0817
+Initial Access,T0864
+Initial Access,T1190
+Initial Access,T0819
+Initial Access,T1133
+Initial Access,T0822
+Initial Access,T1200
+Initial Access,T0883
+Initial Access,T1566
+Initial Access,T1566.001
+Initial Access,T0865
+Initial Access,T1566.002
+Initial Access,T1566.003
+Initial Access,T1091
+Initial Access,T0847
+Initial Access,T1195
+Initial Access,T0862
+Initial Access,T1195.001
+Initial Access,T1195.002
+Initial Access,T1195.003
+Initial Access,T1199
+Initial Access,T1078
+Initial Access,T1078.001
+Initial Access,T1078.002
+Initial Access,T1078.003
+Initial Access,T1078.004
+Initial Access,T0860
+Execution,T1059
+Execution,T1059.001
+Execution,T1059.002
+Execution,T1059.003
+Execution,T1059.004
+Execution,T1059.005
+Execution,T1059.006
+Execution,T1059.007
+Execution,T1059.008
+Execution,T0807
+Execution,T0871
+Execution,T1203
+Execution,T0823
+Execution,T1559
+Execution,T1559.001
+Execution,T1559.002
+Execution,T0830
+Execution,T1106
+Execution,T0886
+Execution,T0873
+Execution,T1053
+Execution,T1053.002
+Execution,T1053.003
+Execution,T1053.005
+Execution,T1053.006
+Execution,T0853
+Execution,T1129
+Execution,T1072
+Execution,T1569
+Execution,T1569.001
+Execution,T1569.002
+Execution,T1204
+Execution,T0863
+Execution,T1204.001
+Execution,T1204.002
+Execution,T1047
+Persistence,T1098
+Persistence,T1098.001
+Persistence,T1098.002
+Persistence,T1098.003
+Persistence,T1098.004
+Persistence,T1197
+Persistence,T1547
+Persistence,T1547.001
+Persistence,T1547.002
+Persistence,T1547.003
+Persistence,T1547.004
+Persistence,T1547.005
+Persistence,T1547.006
+Persistence,T1547.007
+Persistence,T1547.008
+Persistence,T1547.009
+Persistence,T1547.010
+Persistence,T1547.012
+Persistence,T1037
+Persistence,T1037.001
+Persistence,T1037.002
+Persistence,T1037.003
+Persistence,T1037.004
+Persistence,T1037.005
+Persistence,T1176
+Persistence,T1554
+Persistence,T1136
+Persistence,T1136.001
+Persistence,T1136.002
+Persistence,T1136.003
+Persistence,T1543
+Persistence,T1543.001
+Persistence,T1543.002
+Persistence,T1543.003
+Persistence,T1543.004
+Persistence,T1546
+Persistence,T1546.001
+Persistence,T1546.002
+Persistence,T1546.003
+Persistence,T1546.004
+Persistence,T1546.005
+Persistence,T1546.006
+Persistence,T1546.007
+Persistence,T1546.008
+Persistence,T1546.009
+Persistence,T1546.010
+Persistence,T1546.011
+Persistence,T1546.012
+Persistence,T1546.013
+Persistence,T1546.014
+Persistence,T1546.015
+Persistence,T1133
+Persistence,T1574
+Persistence,T1574.001
+Persistence,T1574.004
+Persistence,T1574.005
+Persistence,T1574.006
+Persistence,T1574.007
+Persistence,T1574.008
+Persistence,T1574.009
+Persistence,T1574.010
+Persistence,T1574.011
+Persistence,T1574.012
+Persistence,T0874
+Persistence,T1525
+Persistence,T0839
+Persistence,T1137
+Persistence,T1137.001
+Persistence,T1137.002
+Persistence,T1137.003
+Persistence,T1137.004
+Persistence,T1137.005
+Persistence,T1137.006
+Persistence,T1542
+Persistence,T1542.001
+Persistence,T0857
+Persistence,T1542.002
+Persistence,T1542.003
+Persistence,T1542.004
+Persistence,T1542.005
+Persistence,T0843
+Persistence,T0873
+Persistence,T1053
+Persistence,T1053.002
+Persistence,T1053.003
+Persistence,T1053.005
+Persistence,T1053.006
+Persistence,T1205
+Persistence,T1205.001
+Persistence,T1505
+Persistence,T1505.001
+Persistence,T1505.002
+Persistence,T1505.003
+Persistence,T1078
+Persistence,T0859
+Persistence,T1078.001
+Persistence,T1078.002
+Persistence,T1078.003
+Persistence,T1078.004
+Privilege Escalation,T1548
+Privilege Escalation,T1548.001
+Privilege Escalation,T1548.002
+Privilege Escalation,T1548.004
+Privilege Escalation,T1134
+Privilege Escalation,T1134.001
+Privilege Escalation,T1134.002
+Privilege Escalation,T1134.003
+Privilege Escalation,T1134.004
+Privilege Escalation,T1134.005
+Privilege Escalation,T1547
+Privilege Escalation,T1547.001
+Privilege Escalation,T1547.002
+Privilege Escalation,T1547.003
+Privilege Escalation,T1547.004
+Privilege Escalation,T1547.005
+Privilege Escalation,T1547.006
+Privilege Escalation,T1547.007
+Privilege Escalation,T1547.008
+Privilege Escalation,T1547.009
+Privilege Escalation,T1547.010
+Privilege Escalation,T1547.012
+Privilege Escalation,T1037
+Privilege Escalation,T1037.001
+Privilege Escalation,T1037.002
+Privilege Escalation,T1037.003
+Privilege Escalation,T1037.004
+Privilege Escalation,T1037.005
+Privilege Escalation,T1543
+Privilege Escalation,T1543.001
+Privilege Escalation,T1543.002
+Privilege Escalation,T1543.003
+Privilege Escalation,T1543.004
+Privilege Escalation,T1546
+Privilege Escalation,T1546.001
+Privilege Escalation,T1546.002
+Privilege Escalation,T1546.003
+Privilege Escalation,T1546.004
+Privilege Escalation,T1546.005
+Privilege Escalation,T1546.006
+Privilege Escalation,T1546.007
+Privilege Escalation,T1546.008
+Privilege Escalation,T1546.009
+Privilege Escalation,T1546.010
+Privilege Escalation,T1546.011
+Privilege Escalation,T1546.012
+Privilege Escalation,T1546.013
+Privilege Escalation,T1546.014
+Privilege Escalation,T1546.015
+Privilege Escalation,T1068
+Privilege Escalation,T1484
+Privilege Escalation,T1574
+Privilege Escalation,T1574.001
+Privilege Escalation,T1574.004
+Privilege Escalation,T1574.005
+Privilege Escalation,T1574.006
+Privilege Escalation,T1574.007
+Privilege Escalation,T1574.008
+Privilege Escalation,T1574.009
+Privilege Escalation,T1574.010
+Privilege Escalation,T1574.011
+Privilege Escalation,T1574.012
+Privilege Escalation,T1055
+Privilege Escalation,T1055.001
+Privilege Escalation,T1055.002
+Privilege Escalation,T1055.003
+Privilege Escalation,T1055.004
+Privilege Escalation,T1055.005
+Privilege Escalation,T1055.008
+Privilege Escalation,T1055.009
+Privilege Escalation,T1055.011
+Privilege Escalation,T1055.012
+Privilege Escalation,T1055.013
+Privilege Escalation,T1055.014
+Privilege Escalation,T1053
+Privilege Escalation,T1053.002
+Privilege Escalation,T1053.003
+Privilege Escalation,T1053.005
+Privilege Escalation,T1053.006
+Privilege Escalation,T1078
+Privilege Escalation,T1078.001
+Privilege Escalation,T1078.002
+Privilege Escalation,T1078.003
+Privilege Escalation,T1078.004
+Defense Evasion,T1548
+Defense Evasion,T1548.001
+Defense Evasion,T1548.003
+Defense Evasion,T1548.004
+Defense Evasion,T1548.002
+Defense Evasion,T1134
+Defense Evasion,T1134.001
+Defense Evasion,T1134.002
+Defense Evasion,T1134.003
+Defense Evasion,T1134.004
+Defense Evasion,T1134.005
+Defense Evasion,T1197
+Defense Evasion,T1140
+Defense Evasion,T1006
+Defense Evasion,T1480
+Defense Evasion,T1480.001
+Defense Evasion,T1211
+Defense Evasion,T0820
+Defense Evasion,T1222
+Defense Evasion,T1222.001
+Defense Evasion,T1222.002
+Defense Evasion,T1484
+Defense Evasion,T1564
+Defense Evasion,T1564.001
+Defense Evasion,T1564.002
+Defense Evasion,T1564.003
+Defense Evasion,T1564.004
+Defense Evasion,T1564.005
+Defense Evasion,T1564.006
+Defense Evasion,T1564.007
+Defense Evasion,T1574
+Defense Evasion,T1574.001
+Defense Evasion,T1574.004
+Defense Evasion,T1574.005
+Defense Evasion,T1574.006
+Defense Evasion,T1574.007
+Defense Evasion,T1574.008
+Defense Evasion,T1574.009
+Defense Evasion,T1574.010
+Defense Evasion,T1574.011
+Defense Evasion,T1574.012
+Defense Evasion,T1562
+Defense Evasion,T1562.001
+Defense Evasion,T1562.002
+Defense Evasion,T1562.003
+Defense Evasion,T1562.004
+Defense Evasion,T1562.006
+Defense Evasion,T1562.007
+Defense Evasion,T1562.008
+Defense Evasion,T1070
+Defense Evasion,T0872
+Defense Evasion,T1070.001
+Defense Evasion,T1070.002
+Defense Evasion,T1070.003
+Defense Evasion,T1070.004
+Defense Evasion,T1070.005
+Defense Evasion,T1070.006
+Defense Evasion,T1202
+Defense Evasion,T1036
+Defense Evasion,T0849
+Defense Evasion,T1036.001
+Defense Evasion,T1036.002
+Defense Evasion,T1036.003
+Defense Evasion,T1036.004
+Defense Evasion,T1036.005
+Defense Evasion,T1036.006
+Defense Evasion,T1556
+Defense Evasion,T1556.001
+Defense Evasion,T1556.002
+Defense Evasion,T1556.003
+Defense Evasion,T1556.004
+Defense Evasion,T1578
+Defense Evasion,T1578.001
+Defense Evasion,T1578.002
+Defense Evasion,T1578.003
+Defense Evasion,T1578.004
+Defense Evasion,T1112
+Defense Evasion,T1601
+Defense Evasion,T1601.001
+Defense Evasion,T1601.002
+Defense Evasion,T1599
+Defense Evasion,T1599.001
+Defense Evasion,T1027
+Defense Evasion,T1027.001
+Defense Evasion,T1027.002
+Defense Evasion,T1027.003
+Defense Evasion,T1027.004
+Defense Evasion,T1027.005
+Defense Evasion,T1542
+Defense Evasion,T1542.001
+Defense Evasion,T1542.002
+Defense Evasion,T1542.003
+Defense Evasion,T1542.004
+Defense Evasion,T1542.005
+Defense Evasion,T1055
+Defense Evasion,T1055.001
+Defense Evasion,T1055.002
+Defense Evasion,T1055.003
+Defense Evasion,T1055.004
+Defense Evasion,T1055.005
+Defense Evasion,T1055.008
+Defense Evasion,T1055.009
+Defense Evasion,T1055.011
+Defense Evasion,T1055.012
+Defense Evasion,T1055.013
+Defense Evasion,T1055.014
+Defense Evasion,T1207
+Defense Evasion,T0848
+Defense Evasion,T1014
+Defense Evasion,T0851
+Defense Evasion,T1218
+Defense Evasion,T1218.001
+Defense Evasion,T1218.002
+Defense Evasion,T1218.003
+Defense Evasion,T1218.004
+Defense Evasion,T1218.005
+Defense Evasion,T1218.007
+Defense Evasion,T1218.008
+Defense Evasion,T1218.009
+Defense Evasion,T1218.010
+Defense Evasion,T1218.011
+Defense Evasion,T1218.012
+Defense Evasion,T1216
+Defense Evasion,T1216.001
+Defense Evasion,T0856
+Defense Evasion,T1553
+Defense Evasion,T1553.001
+Defense Evasion,T1553.002
+Defense Evasion,T1553.003
+Defense Evasion,T1553.004
+Defense Evasion,T1221
+Defense Evasion,T1205
+Defense Evasion,T1205.001
+Defense Evasion,T1127
+Defense Evasion,T1127.001
+Defense Evasion,T1535
+Defense Evasion,T1550
+Defense Evasion,T1550.001
+Defense Evasion,T1550.002
+Defense Evasion,T1550.003
+Defense Evasion,T1550.004
+Defense Evasion,T0858
+Defense Evasion,T1078
+Defense Evasion,T1078.001
+Defense Evasion,T1078.002
+Defense Evasion,T1078.003
+Defense Evasion,T1078.004
+Defense Evasion,T1497
+Defense Evasion,T1497.001
+Defense Evasion,T1497.002
+Defense Evasion,T1497.003
+Defense Evasion,T1600
+Defense Evasion,T1600.001
+Defense Evasion,T1600.002
+Defense Evasion,T1220
+Credential Access,T1110
+Credential Access,T1110.001
+Credential Access,T1110.002
+Credential Access,T1110.003
+Credential Access,T1110.004
+Credential Access,T1555
+Credential Access,T1555.001
+Credential Access,T1555.002
+Credential Access,T1555.003
+Credential Access,T1212
+Credential Access,T1187
+Credential Access,T1056
+Credential Access,T1056.001
+Credential Access,T1056.002
+Credential Access,T1056.003
+Credential Access,T1056.004
+Credential Access,T1557
+Credential Access,T1557.001
+Credential Access,T1557.002
+Credential Access,T1556
+Credential Access,T1556.001
+Credential Access,T1556.002
+Credential Access,T1556.003
+Credential Access,T1556.004
+Credential Access,T1040
+Credential Access,T1003
+Credential Access,T1003.001
+Credential Access,T1003.002
+Credential Access,T1003.003
+Credential Access,T1003.004
+Credential Access,T1003.005
+Credential Access,T1003.006
+Credential Access,T1003.007
+Credential Access,T1003.008
+Credential Access,T1528
+Credential Access,T1558
+Credential Access,T1558.001
+Credential Access,T1558.002
+Credential Access,T1558.003
+Credential Access,T1558.004
+Credential Access,T1539
+Credential Access,T1111
+Credential Access,T1552
+Credential Access,T1552.001
+Credential Access,T1552.002
+Credential Access,T1552.003
+Credential Access,T1552.004
+Credential Access,T1552.005
+Credential Access,T1552.006
+Discovery,T1087
+Discovery,T1087.001
+Discovery,T1087.002
+Discovery,T1087.003
+Discovery,T1087.004
+Discovery,T1010
+Discovery,T1217
+Discovery,T1580
+Discovery,T1538
+Discovery,T1526
+Discovery,T0888
+Discovery,T1482
+Discovery,T1083
+Discovery,T0887
+Discovery,T0840
+Discovery,T1046
+Discovery,T0842
+Discovery,T1135
+Discovery,T1040
+Discovery,T1201
+Discovery,T1120
+Discovery,T1069
+Discovery,T1069.001
+Discovery,T1069.002
+Discovery,T1069.003
+Discovery,T1057
+Discovery,T1012
+Discovery,T1018
+Discovery,T0846
+Discovery,T1518
+Discovery,T1518.001
+Discovery,T1082
+Discovery,T1016
+Discovery,T1049
+Discovery,T1033
+Discovery,T1007
+Discovery,T1124
+Discovery,T1497
+Discovery,T1497.001
+Discovery,T1497.002
+Discovery,T1497.003
+Lateral Movement,T0812
+Lateral Movement,T1210
+Lateral Movement,T0866
+Lateral Movement,T0822
+Lateral Movement,T1534
+Lateral Movement,T1570
+Lateral Movement,T0886
+Lateral Movement,T0867
+Lateral Movement,T1563
+Lateral Movement,T1563.001
+Lateral Movement,T1563.002
+Lateral Movement,T1021
+Lateral Movement,T1021.001
+Lateral Movement,T1021.002
+Lateral Movement,T1021.003
+Lateral Movement,T1021.004
+Lateral Movement,T1021.005
+Lateral Movement,T1021.006
+Lateral Movement,T1091
+Lateral Movement,T1072
+Lateral Movement,T1080
+Lateral Movement,T1550
+Lateral Movement,T1550.001
+Lateral Movement,T1550.002
+Lateral Movement,T1550.003
+Lateral Movement,T1550.004
+Lateral Movement,T0859
+Collection,T1560
+Collection,T1560.001
+Collection,T1560.002
+Collection,T1560.003
+Collection,T1123
+Collection,T1119
+Collection,T0802
+Collection,T1115
+Collection,T1530
+Collection,T1602
+Collection,T1602.001
+Collection,T1602.002
+Collection,T1213
+Collection,T0811
+Collection,T1213.001
+Collection,T1213.002
+Collection,T1005
+Collection,T1039
+Collection,T1025
+Collection,T1074
+Collection,T1074.001
+Collection,T1074.002
+Collection,T0868
+Collection,T1114
+Collection,T1114.001
+Collection,T1114.002
+Collection,T1114.003
+Collection,T0877
+Collection,T1056
+Collection,T1056.001
+Collection,T1056.002
+Collection,T1056.003
+Collection,T1056.004
+Collection,T0893
+Collection,T1185
+Collection,T1557
+Collection,T1557.001
+Collection,T1557.002
+Collection,T0801
+Collection,T0861
+Collection,T0845
+Collection,T1113
+Collection,T0852
+Collection,T1125
+Command and Control,T1071
+Command and Control,T1071.001
+Command and Control,T1071.002
+Command and Control,T1071.003
+Command and Control,T1071.004
+Command and Control,T0885
+Command and Control,T1092
+Command and Control,T0884
+Command and Control,T1132
+Command and Control,T1132.001
+Command and Control,T1132.002
+Command and Control,T1001
+Command and Control,T1001.001
+Command and Control,T1001.002
+Command and Control,T1001.003
+Command and Control,T1568
+Command and Control,T1568.001
+Command and Control,T1568.002
+Command and Control,T1568.003
+Command and Control,T1573
+Command and Control,T1573.001
+Command and Control,T1573.002
+Command and Control,T1008
+Command and Control,T1105
+Command and Control,T1104
+Command and Control,T1095
+Command and Control,T1571
+Command and Control,T1572
+Command and Control,T1090
+Command and Control,T1090.001
+Command and Control,T1090.002
+Command and Control,T1090.003
+Command and Control,T1090.004
+Command and Control,T1219
+Command and Control,T0869
+Command and Control,T1205
+Command and Control,T1205.001
+Command and Control,T1102
+Command and Control,T1102.001
+Command and Control,T1102.002
+Command and Control,T1102.003
+Exfiltration,T1020
+Exfiltration,T1020.001
+Exfiltration,T1030
+Exfiltration,T1048
+Exfiltration,T1048.001
+Exfiltration,T1048.002
+Exfiltration,T1048.003
+Exfiltration,T1041
+Exfiltration,T1011
+Exfiltration,T1011.001
+Exfiltration,T1052
+Exfiltration,T1052.001
+Exfiltration,T1567
+Exfiltration,T1567.001
+Exfiltration,T1567.002
+Exfiltration,T1029
+Exfiltration,T1537
+Impact,T1531
+Impact,T1485
+Impact,T1486
+Impact,T1565
+Impact,T1565.003
+Impact,T1491
+Impact,T1491.001
+Impact,T1491.002
+Impact,T1561
+Impact,T1561.001
+Impact,T1561.002
+Impact,T1499
+Impact,T1499.001
+Impact,T1499.002
+Impact,T1499.003
+Impact,T1499.004
+Impact,T1495
+Impact,T1490
+Impact,T1498
+Impact,T1498.001
+Impact,T1498.002
+Impact,T1496
+Impact,T1489
+Impact,T1529
+Inhibit Response Function,T0800
+Inhibit Response Function,T0878
+Inhibit Response Function,T0803
+Inhibit Response Function,T0804
+Inhibit Response Function,T0805
+Inhibit Response Function,T0809
+Inhibit Response Function,T0814
+Inhibit Response Function,T0816
+Inhibit Response Function,T0835
+Inhibit Response Function,T0838
+Inhibit Response Function,T0892
+Inhibit Response Function,T0843
+Inhibit Response Function,T0851
+Inhibit Response Function,T0857
+Inhibit Response Function,T0858
+Impair Process Control,T0806
+Impair Process Control,T0849
+Impair Process Control,T0836
+Impair Process Control,T0839
+Impair Process Control,T0843
+Impair Process Control,T0848
+Impair Process Control,T0881
+Impair Process Control,T0856
+Impair Process Control,T0855
+Impact Ics,T0879
+Impact Ics,T0813
+Impact Ics,T0815
+Impact Ics,T0826
+Impact Ics,T0827
+Impact Ics,T0828
+Impact Ics,T0880
+Impact Ics,T0829
+Impact Ics,T0831
+Impact Ics,T0832
+Impact Ics,T0882

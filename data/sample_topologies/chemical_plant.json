@@ -1,0 +1,319 @@
+{
+  "scenario_id": "chemical_plant",
+  "description": "Representative IIoT chemical plant based on field survey: multiple workshops with PLC-driven vessels, camera analytics, DMZ, and enterprise IT.",
+  "nodes": [
+    {
+      "device_id": "workshop_a_plc",
+      "name": "Workshop A PLC",
+      "device_type": "PLC",
+      "ip_address": "10.0.1.10",
+      "neighbors": ["workshop_a_hmi", "dmz_firewall"],
+      "connections": [
+        {
+          "target": "workshop_a_hmi",
+          "segment": "Level 1 control network",
+          "protocols": ["Modbus/TCP", "Profinet"],
+          "direction": "bidirectional",
+          "notes": "Controls agitators, pumps, and valve actuators in Workshop A."
+        },
+        {
+          "target": "dmz_firewall",
+          "segment": "Level 1 to Level 3.5 conduit",
+          "protocols": ["OPC UA"],
+          "direction": "outbound",
+          "notes": "Telemetry uplink for historian replication through the DMZ."
+        }
+      ],
+      "vulnerabilities": [
+        {
+          "cve_id": "CVE-2021-20039",
+          "cvss_base": 8.8,
+          "epss": 0.37,
+          "mapped_techniques": ["T0855", "T0829"]
+        },
+        {
+          "cve_id": "CVE-2020-10627",
+          "cvss_base": 7.5,
+          "epss": 0.21,
+          "mapped_techniques": ["T0815"]
+        }
+      ]
+    },
+    {
+      "device_id": "workshop_a_hmi",
+      "name": "Workshop A HMI",
+      "device_type": "HMI",
+      "ip_address": "10.0.1.20",
+      "neighbors": ["workshop_a_plc", "workshop_a_workstation", "dmz_firewall"],
+      "connections": [
+        {
+          "target": "workshop_a_plc",
+          "segment": "Level 1 control network",
+          "protocols": ["Modbus/TCP"],
+          "direction": "bidirectional",
+          "notes": "Command and visualization channel for production line operators."
+        },
+        {
+          "target": "workshop_a_workstation",
+          "segment": "Level 2 engineering LAN",
+          "protocols": ["SMB", "RDP"],
+          "direction": "bidirectional",
+          "notes": "Engineering updates and recipe deployment."
+        },
+        {
+          "target": "dmz_firewall",
+          "segment": "Level 1 to DMZ conduit",
+          "protocols": ["HTTPS"],
+          "direction": "outbound",
+          "notes": "Alarm streaming toward DMZ data servers."
+        }
+      ],
+      "vulnerabilities": [
+        {
+          "cve_id": "CVE-2022-26872",
+          "cvss_base": 9.1,
+          "epss": 0.58,
+          "mapped_techniques": ["T0865", "T0806", "T0889"]
+        }
+      ]
+    },
+    {
+      "device_id": "workshop_a_workstation",
+      "name": "Workshop A Engineering WS",
+      "device_type": "EngineeringWorkstation",
+      "ip_address": "10.0.1.30",
+      "neighbors": ["workshop_a_hmi", "dmz_firewall"],
+      "connections": [
+        {
+          "target": "workshop_a_hmi",
+          "segment": "Level 2 engineering LAN",
+          "protocols": ["SMB", "RDP"],
+          "direction": "bidirectional",
+          "notes": "Deployment of ladder logic and firmware packages."
+        },
+        {
+          "target": "dmz_firewall",
+          "segment": "Level 2 to DMZ conduit",
+          "protocols": ["SFTP"],
+          "direction": "outbound",
+          "notes": "Patch management sync to DMZ staging servers."
+        }
+      ],
+      "vulnerabilities": [
+        {
+          "cve_id": "CVE-2023-21716",
+          "cvss_base": 7.8,
+          "epss": 0.61,
+          "mapped_techniques": ["T0849", "T0868"]
+        }
+      ]
+    },
+    {
+      "device_id": "camera_array",
+      "name": "Perimeter Camera Array",
+      "device_type": "EdgeAI",
+      "ip_address": "10.0.2.10",
+      "neighbors": ["dmz_firewall"],
+      "connections": [
+        {
+          "target": "dmz_firewall",
+          "segment": "Level 1 physical security VLAN",
+          "protocols": ["RTSP", "HTTPS"],
+          "direction": "outbound",
+          "notes": "Video analytics feed forwarded to DMZ for archiving."
+        }
+      ],
+      "vulnerabilities": [
+        {
+          "cve_id": "CVE-2021-36260",
+          "cvss_base": 9.8,
+          "epss": 0.95,
+          "mapped_techniques": ["T0848", "T0858"]
+        }
+      ]
+    },
+    {
+      "device_id": "dmz_firewall",
+      "name": "DMZ Firewall",
+      "device_type": "Firewall",
+      "ip_address": "10.0.3.1",
+      "neighbors": [
+        "workshop_a_plc",
+        "workshop_a_hmi",
+        "workshop_a_workstation",
+        "camera_array",
+        "dmz_servers"
+      ],
+      "connections": [
+        {
+          "target": "workshop_a_plc",
+          "segment": "Level 1 to Level 3.5 conduit",
+          "protocols": ["OPC UA"],
+          "direction": "inbound",
+          "notes": "Ingress rules restrict PLC telemetry uploads."
+        },
+        {
+          "target": "workshop_a_hmi",
+          "segment": "Level 1 to DMZ conduit",
+          "protocols": ["HTTPS"],
+          "direction": "inbound",
+          "notes": "Alarm ingestion toward DMZ services."
+        },
+        {
+          "target": "workshop_a_workstation",
+          "segment": "Level 2 to DMZ conduit",
+          "protocols": ["SFTP"],
+          "direction": "inbound",
+          "notes": "Controlled patch synchronization."
+        },
+        {
+          "target": "camera_array",
+          "segment": "Level 1 security VLAN",
+          "protocols": ["RTSP", "HTTPS"],
+          "direction": "inbound",
+          "notes": "CCTV stream termination."
+        },
+        {
+          "target": "dmz_servers",
+          "segment": "DMZ internal network",
+          "protocols": ["HTTPS", "Syslog"],
+          "direction": "bidirectional",
+          "notes": "Core DMZ services and logging."
+        }
+      ],
+      "vulnerabilities": [
+        {
+          "cve_id": "CVE-2022-0778",
+          "cvss_base": 7.5,
+          "epss": 0.11,
+          "mapped_techniques": ["T0887"]
+        }
+      ]
+    },
+    {
+      "device_id": "dmz_servers",
+      "name": "DMZ Data Servers",
+      "device_type": "Historian",
+      "ip_address": "10.0.3.20",
+      "neighbors": ["dmz_firewall", "enterprise_gateway"],
+      "connections": [
+        {
+          "target": "dmz_firewall",
+          "segment": "DMZ internal network",
+          "protocols": ["HTTPS", "Syslog"],
+          "direction": "bidirectional",
+          "notes": "Firewall log aggregation and historian sync."
+        },
+        {
+          "target": "enterprise_gateway",
+          "segment": "DMZ to Level 4 conduit",
+          "protocols": ["MQTT", "HTTPS"],
+          "direction": "outbound",
+          "notes": "Production KPIs pushed to enterprise systems."
+        }
+      ],
+      "vulnerabilities": [
+        {
+          "cve_id": "CVE-2023-28252",
+          "cvss_base": 7.8,
+          "epss": 0.86,
+          "mapped_techniques": ["T0852", "T0886"]
+        }
+      ]
+    },
+    {
+      "device_id": "enterprise_gateway",
+      "name": "Enterprise Gateway",
+      "device_type": "Gateway",
+      "ip_address": "10.0.4.1",
+      "neighbors": ["dmz_servers", "erp_server", "corp_workstations"],
+      "connections": [
+        {
+          "target": "dmz_servers",
+          "segment": "DMZ to Level 4 conduit",
+          "protocols": ["MQTT", "HTTPS"],
+          "direction": "inbound",
+          "notes": "Inbound telemetry from production DMZ."
+        },
+        {
+          "target": "erp_server",
+          "segment": "Level 4 enterprise core",
+          "protocols": ["HTTPS", "SQL"],
+          "direction": "bidirectional",
+          "notes": "Business process integration."
+        },
+        {
+          "target": "corp_workstations",
+          "segment": "Level 4 user LAN",
+          "protocols": ["HTTPS", "SMB"],
+          "direction": "bidirectional",
+          "notes": "Corporate access to production dashboards."
+        }
+      ],
+      "vulnerabilities": []
+    },
+    {
+      "device_id": "erp_server",
+      "name": "ERP Server",
+      "device_type": "Server",
+      "ip_address": "10.0.4.50",
+      "neighbors": ["enterprise_gateway", "corp_workstations"],
+      "connections": [
+        {
+          "target": "enterprise_gateway",
+          "segment": "Level 4 enterprise core",
+          "protocols": ["HTTPS", "SQL"],
+          "direction": "bidirectional",
+          "notes": "Order management and planning integration."
+        },
+        {
+          "target": "corp_workstations",
+          "segment": "Level 4 user LAN",
+          "protocols": ["HTTPS", "SMB"],
+          "direction": "bidirectional",
+          "notes": "User access for corporate staff."
+        }
+      ],
+      "vulnerabilities": [
+        {
+          "cve_id": "CVE-2021-34527",
+          "cvss_base": 8.8,
+          "epss": 0.32,
+          "mapped_techniques": ["T1598", "T1078"]
+        }
+      ]
+    },
+    {
+      "device_id": "corp_workstations",
+      "name": "Corporate Workstations",
+      "device_type": "WorkstationGroup",
+      "ip_address": "10.0.5.100/24",
+      "neighbors": ["enterprise_gateway", "erp_server"],
+      "connections": [
+        {
+          "target": "enterprise_gateway",
+          "segment": "Level 4 user LAN",
+          "protocols": ["HTTPS", "SMB"],
+          "direction": "bidirectional",
+          "notes": "Access to dashboards and shared resources."
+        },
+        {
+          "target": "erp_server",
+          "segment": "Level 4 user LAN",
+          "protocols": ["HTTPS"],
+          "direction": "bidirectional",
+          "notes": "ERP client communications."
+        }
+      ],
+      "vulnerabilities": [
+        {
+          "cve_id": "CVE-2023-21715",
+          "cvss_base": 7.3,
+          "epss": 0.64,
+          "mapped_techniques": ["T1204", "T1566"]
+        }
+      ]
+    }
+  ]
+}
+
