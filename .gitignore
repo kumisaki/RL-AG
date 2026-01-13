@@ -1,0 +1,56 @@
+# Paper and documentation drafts (kept local only)
+paper.tex
+methodology.tex
+METHODOLOGY.md
+NETWORK_TOPOLOGY_UPDATE.md
+RL Cyber-Attack Path Generation Strategy.md
+stability_results.json
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyTorch checkpoints
+checkpoints/
+*.pt
+*.pth
+
+# TensorBoard logs
+logs/
+runs/
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
