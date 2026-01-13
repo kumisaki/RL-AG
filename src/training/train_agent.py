@@ -30,7 +30,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--topology",
         type=Path,
-        default=Path("data/sample_topologies/chemical_park_central.json"),
+        default=Path("data/sample_topologies/chemical_plant.json"),
         help="Topology JSON file.",
     )
     parser.add_argument("--total-steps", type=int, default=500_000)
@@ -41,7 +41,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--ppo-epochs", type=int, default=4)
     parser.add_argument("--minibatch-size", type=int, default=256)
     parser.add_argument("--learning-rate", type=float, default=5e-4)
-    parser.add_argument("--entropy-coef", type=float, default=0.001)
+    parser.add_argument("--entropy-coef", type=float, default=0.02)
     parser.add_argument("--seed", type=int, default=13)
     parser.add_argument(
         "--curriculum-stages",
@@ -60,13 +60,18 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Enable the built-in stage-by-stage curriculum when explicit stages are not provided.",
     )
-    parser.add_argument("--stage-patience", type=int, default=8)
+    parser.add_argument("--stage-patience", type=int, default=16)
     parser.add_argument("--stage-completion-bonus", type=float, default=5.0)
     parser.add_argument("--stage-transition-bonus", type=float, default=1.0)
     parser.add_argument("--techniques-per-policy", type=int, default=3)
     parser.add_argument("--targets-per-technique", type=int, default=5)
     parser.add_argument("--max-steps", type=int, default=200)
-    parser.add_argument("--normalize-rewards", action="store_true", default=False)
+    parser.add_argument(
+        "--normalize-rewards",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Enable or disable running-stat reward normalization (default: enabled).",
+    )
     return parser.parse_args()
 
 

@@ -34,7 +34,7 @@ class TrainingConfig:
     gae_lambda: float = 0.95
     clip_coef: float = 0.3
     vf_coef: float = 0.5
-    entropy_coef: float = 0.001
+    entropy_coef: float = 0.02
     target_kl: Optional[float] = 0.015
     device: str = "cpu"
     log_dir: Path = Path("logs")

@@ -29,6 +29,7 @@ class Transition:
     value: torch.Tensor
     reward: float
     done: bool
+    terminated: bool
     action_mask: torch.Tensor
 
 
@@ -69,16 +70,21 @@ class PPOTrainer:
         self._stage_success_history: Dict[int, deque[float]] = {}
         self._success_window = 5
         self._success_threshold = 0.7
+        self._curriculum_needs_reset = False
         self.reward_stats = RunningStats() if training_cfg.normalize_rewards else None
         if self.curriculum:
             self._apply_curriculum(force=True)
 
     def train(self) -> None:
         observation, _ = self.env.reset()
+        self._curriculum_needs_reset = False
         next_value = torch.zeros(1)
         for step in range(0, self.training_cfg.total_steps, self.training_cfg.rollout_length):
             if self.curriculum:
                 self._apply_curriculum()
+                if self._curriculum_needs_reset:
+                    observation, _ = self.env.reset()
+                    self._curriculum_needs_reset = False
             transitions: List[Transition] = []
             for rollout_step in range(self.training_cfg.rollout_length):
                 graph_batch = encode_observation(observation, self.relation_vocab)
@@ -98,6 +104,7 @@ class PPOTrainer:
                         value=value.detach().view(1),
                         reward=float(reward),
                         done=terminated or truncated,
+                        terminated=bool(terminated),
                         action_mask=mask_tensor.detach().cpu(),
                     )
                 )
@@ -231,17 +238,20 @@ class PPOTrainer:
             checkpoint_path,
         )
 
-    def _apply_curriculum(self, force: bool = False) -> None:
+    def _apply_curriculum(self, force: bool = False) -> bool:
         assert self.curriculum is not None
         if self._curriculum_pointer >= len(self.curriculum.stages):
             self._curriculum_pointer = len(self.curriculum.stages) - 1
-            return
+            return False
         stage_subset = self.curriculum.stages[: self._curriculum_pointer + 1]
-        if force or stage_subset != self._active_stage_subset:
+        changed = force or stage_subset != self._active_stage_subset
+        if changed:
             self.env.set_stage_order(stage_subset)
             self._active_stage_subset = stage_subset
             if force:
                 self._stage_rollouts = 0
+            self._curriculum_needs_reset = True
+        return changed
 
     def _record_stage_success(
         self,
@@ -305,6 +315,7 @@ class PPOTrainer:
         rewards = [t.reward for t in transitions]
         avg_reward = sum(rewards) / len(rewards)
         done_rate = sum(1 for t in transitions if t.done) / len(transitions)
+        impact_success = sum(1 for t in transitions if t.terminated) / len(transitions)
         stage_counts = {}
         stage_completions: Dict[int, int] = {}
         if hasattr(self.env, "consume_stage_visitation"):
@@ -321,12 +332,14 @@ class PPOTrainer:
         print(
             f"[Rollout {global_step}] avg_reward={avg_reward:.3f} done_rate={done_rate:.2f} "
             f"policy_loss={loss_metrics['policy_loss']:.3f} value_loss={loss_metrics['value_loss']:.3f} "
-            f"entropy={loss_metrics['entropy']:.3f} stages={stage_counts} completions={stage_completions}"
+            f"entropy={loss_metrics['entropy']:.3f} impact_success={impact_success:.2f} "
+            f"stages={stage_counts} completions={stage_completions}"
         )
         if not self.writer:
             return
         self.writer.add_scalar("reward/avg", avg_reward, global_step)
         self.writer.add_scalar("reward/done_rate", done_rate, global_step)
+        self.writer.add_scalar("reward/impact_success_rate", impact_success, global_step)
         self.writer.add_scalar("loss/policy", loss_metrics["policy_loss"], global_step)
         self.writer.add_scalar("loss/value", loss_metrics["value_loss"], global_step)
         self.writer.add_scalar("policy/entropy", loss_metrics["entropy"], global_step)

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, Optional, Tuple, Set, List
+from typing import Dict, Optional, Tuple, Set, List, Sequence
 
 from data.policy_loader import PolicyRepository
 from data.technique_loader import TechniqueRepository
@@ -93,6 +93,8 @@ class APTAttackEnv(gym.Env if gym is not None else object):  # type: ignore[misc
         self._tactic_index_map = {stage: idx for idx, stage in enumerate(self._active_tactic_ids)}
         self._max_steps = max_steps if max_steps is not None else 200
         self._dependencies = dependency_map
+        policies = list(policy_repo.iter_policies())
+        self._policies = policies
         self._parent_lookup: Dict[int, Optional[str]] = {}
         if self._dependencies:
             for stage in self._all_tactic_ids:
@@ -101,20 +103,18 @@ class APTAttackEnv(gym.Env if gym is not None else object):  # type: ignore[misc
             for stage in self._all_tactic_ids:
                 self._parent_lookup[stage] = f"stage_{stage}"
         self._parent_by_stage = {stage: self._parent_lookup.get(stage) for stage in self._active_tactic_ids}
-        self._mandatory_targets = {
-            stage: {name.lower() for name in (self._dependencies.mandatory_tactics(stage) if self._dependencies else [])}
-            for stage in self._active_tactic_ids
-        }
-        self._optional_targets = {
-            stage: {name.lower() for name in (self._dependencies.optional_tactics(stage) if self._dependencies else [])}
-            for stage in self._active_tactic_ids
-        }
+        self._policy_parent: Dict[PolicyKey, str] = {}
+        self._stage_parent_map: Dict[int, str] = {}
+        self._tactic_classification: Dict[str, str] = {}
+        self._build_policy_metadata(policies)
+        self._optional_only_stages: Set[int] = set()
+        self._rebuild_target_sets()
         self._stage_patience = max(stage_patience, 1)
         self._stage_completion_bonus = stage_completion_bonus
         self._stage_transition_bonus = stage_transition_bonus
         self._mandatory_tactic_reward = max(stage_transition_bonus, 1.0)
         self._optional_tactic_reward = self._mandatory_tactic_reward * 0.5
-        policies = list(policy_repo.iter_policies())
+        self._impact_bonus = max(2 * self._stage_completion_bonus + 1.0, 11.0)
         techniques = list(technique_repo.iter_mappings())
         self._action_space_helper = MacroActionSpace(
             self._topology,
@@ -131,16 +131,21 @@ class APTAttackEnv(gym.Env if gym is not None else object):  # type: ignore[misc
         self._stage_step_counter = 0
         self._stage_visit_counts: Dict[int, int] = {}
         self._pending_stage_completion: Dict[int, int] = {}
-        self._mandatory_progress: Dict[int, Set[str]] = {}
-        self._optional_progress: Dict[int, Set[str]] = {}
+        self._mandatory_progress: Dict[str, Set[str]] = {}
+        self._optional_progress: Dict[str, Set[str]] = {}
         self._completed_stages: Set[int] = set()
         self._available_indices: Set[int] = set()
         self._unlocked_parents: Set[str] = set()
         self._campaign_final_stage = self._active_tactic_ids[-1]
         self._last_progress_step = 0
-        self._stagnation_penalty_rate = 0.02
-        self._stagnation_penalty_cap = 1.0
+        self._stagnation_penalty_rate = 0.01
+        self._stagnation_penalty_cap = 0.5
         self._initialize_progress_trackers()
+        
+        # Network topology tracking for reachability
+        self._compromised_devices: Set[str] = set()
+        self._initial_entry_device: Optional[str] = None
+        self._previously_compromised: Set[str] = set()
 
         self.action_space = gym.spaces.Discrete(len(self._action_space_helper.all_actions())) if gym else None
         self.observation_space = None  # handled by custom dataclass
@@ -152,8 +157,9 @@ class APTAttackEnv(gym.Env if gym is not None else object):  # type: ignore[misc
     def _initialize_progress_trackers(self) -> None:
         self._stage_visit_counts = {stage: 0 for stage in self._active_tactic_ids}
         self._pending_stage_completion = {}
-        self._mandatory_progress = {stage: set() for stage in self._active_tactic_ids}
-        self._optional_progress = {stage: set() for stage in self._active_tactic_ids}
+        parent_ids = set(self._stage_parent_map.get(stage) or "" for stage in self._active_tactic_ids)
+        self._mandatory_progress = {parent: set() for parent in parent_ids}
+        self._optional_progress = {parent: set() for parent in parent_ids}
         self._completed_stages = set()
         self._available_indices = set()
         if self._active_tactic_ids:
@@ -182,20 +188,148 @@ class APTAttackEnv(gym.Env if gym is not None else object):  # type: ignore[misc
         self._active_tactic_ids = ordered
         self._tactic_index_map = {stage: idx for idx, stage in enumerate(self._active_tactic_ids)}
         self._parent_by_stage = {stage: self._parent_lookup.get(stage) for stage in self._active_tactic_ids}
-        self._mandatory_targets = {
-            stage: {name.lower() for name in (self._dependencies.mandatory_tactics(stage) if self._dependencies else [])}
-            for stage in self._active_tactic_ids
-        }
-        self._optional_targets = {
-            stage: {name.lower() for name in (self._dependencies.optional_tactics(stage) if self._dependencies else [])}
-            for stage in self._active_tactic_ids
-        }
+        self._rebuild_target_sets()
         self._campaign_final_stage = self._active_tactic_ids[-1]
         self._initialize_progress_trackers()
+
+    def _rebuild_target_sets(self) -> None:
+        self._mandatory_targets: Dict[str, Set[str]] = {}
+        self._optional_targets: Dict[str, Set[str]] = {}
+        if self._dependencies:
+            self._critical_tactics = {name.lower() for name in self._dependencies.critical_tactics()}
+            self._movement_tactics = {name.lower() for name in self._dependencies.movement_tactics()}
+        else:
+            self._critical_tactics = {"execution", "command and control", "impact"}
+            self._movement_tactics = {"lateral movement"}
+        for policy in self._policies:
+            parent = self._policy_parent.get(policy.key)
+            if not parent:
+                continue
+            normalized = policy.key.tactic.lower()
+            category = self._tactic_classification.get(normalized, "neutral")
+            if category == "mandatory":
+                self._mandatory_targets.setdefault(parent, set()).add(normalized)
+            elif category == "optional":
+                self._optional_targets.setdefault(parent, set()).add(normalized)
+        self._impact_parent_ids = {
+            parent for parent, tactics in self._mandatory_targets.items() if "impact" in tactics
+        }
+        self._impact_indices = {
+            self._tactic_index_map[stage]
+            for stage in self._active_tactic_ids
+            if self._stage_parent_map.get(stage) in self._impact_parent_ids
+        }
+        self._refresh_optional_stage_flags()
+
+    def _refresh_optional_stage_flags(self) -> None:
+        self._optional_only_stages = set()
+        for stage in self._active_tactic_ids:
+            parent = self._stage_parent_map.get(stage)
+            has_mandatory = bool(self._mandatory_targets.get(parent or "", set()))
+            if not has_mandatory:
+                self._optional_only_stages.add(stage)
+
+    def _device_platform(self, device_id: str) -> Optional[str]:
+        """Best-effort lookup for the platform/OS associated with a device."""
+        try:
+            node = self._topology.get_node(device_id)
+        except KeyError:
+            return None
+        return getattr(node, "platform", None)
+
+    def _stage_reward_multiplier(self, stage: int) -> float:
+        if not self._active_tactic_ids:
+            return 1.0
+        index = self._tactic_index_map.get(stage, 0)
+        denom = max(1, len(self._active_tactic_ids) - 1)
+        return 1.0 + index / denom
+
+    def _build_policy_metadata(self, policies: Sequence[PolicyDefinition]) -> None:
+        classification: Dict[str, str] = {}
+        tactic_parent: Dict[str, str] = {}
+        if self._dependencies:
+            for config in self._dependencies.iter_configs():
+                base_parent = config.parent_stage or f"tactic_{config.tactic_id}"
+                parent = f"{base_parent}#{config.tactic_id}"
+                for name in config.mandatory:
+                    normalized = name.lower()
+                    classification[normalized] = "mandatory"
+                    tactic_parent.setdefault(normalized, parent)
+                for name in config.optional:
+                    normalized = name.lower()
+                    classification.setdefault(normalized, "optional")
+                    tactic_parent.setdefault(normalized, parent)
+        for policy in policies:
+            normalized = policy.key.tactic.lower()
+            parent = tactic_parent.get(normalized)
+            if not parent and self._dependencies:
+                config = self._dependencies.config_for_tactic_name(normalized)
+                if config:
+                    base_parent = config.parent_stage or f"tactic_{config.tactic_id}"
+                    parent = f"{base_parent}#{config.tactic_id}"
+                    if normalized in {name.lower() for name in config.mandatory}:
+                        classification[normalized] = "mandatory"
+                    elif normalized in {name.lower() for name in config.optional}:
+                        classification.setdefault(normalized, "optional")
+            if not parent:
+                parent = policy.stage_group or f"stage_{policy.key.stage}"
+            self._policy_parent[policy.key] = parent
+            self._stage_parent_map.setdefault(policy.key.stage, parent)
+            classification.setdefault(normalized, "neutral")
+        self._tactic_classification = classification
+
+    def _classify_tactic(self, tactic_name: str) -> str:
+        return self._tactic_classification.get(tactic_name.lower(), "neutral")
 
     def provenance_state(self) -> ProvenanceState:
         """Return the underlying provenance graph (read-only usage expected)."""
         return self._provenance
+    
+    def _select_entry_point(self) -> str:
+        """Select initial entry point for attack (typically internet-facing device)."""
+        # Prefer workstations, servers, or engineering stations as entry points
+        preferred_types = ["Workstation", "Server", "EngineeringWorkstation", "HMI"]
+        for device_id in self._topology.node_ids():
+            device = self._topology.get_node(device_id)
+            if device.device_type in preferred_types:
+                return device_id
+        # Fallback: return first device
+        return self._topology.node_ids()[0]
+    
+    def _is_lateral_movement_technique(self, technique_id: str) -> bool:
+        """Check if technique is for lateral movement."""
+        # Check technique mappings to find the tactic
+        for mapping in self._tech_repo.iter_mappings():
+            if technique_id in mapping.technique_ids:
+                tactic_lower = mapping.key.tactic.lower()
+                return tactic_lower in self._movement_tactics
+        return False
+    
+    def _is_device_reachable(self, target_device: str, technique_id: str) -> bool:
+        """Check if target device is reachable from compromised devices."""
+        # If no devices compromised yet, allow initial access
+        if not self._compromised_devices:
+            return True
+        
+        # Target already compromised - always reachable for persistence/privilege escalation
+        if target_device in self._compromised_devices:
+            return True
+        
+        # Check if this is a lateral movement technique
+        is_lateral_movement = self._is_lateral_movement_technique(technique_id)
+        
+        # Lateral movement techniques can reach any device
+        if is_lateral_movement:
+            return True
+        
+        # Otherwise, target must be a neighbor of a compromised device
+        for compromised in self._compromised_devices:
+            neighbors = self._topology.neighbors(compromised)
+            if target_device in neighbors:
+                return True
+        
+        # Not reachable
+        return False
 
     def reset(self, *, seed: Optional[int] = None, options: Optional[dict] = None):  # type: ignore[override]
         del seed, options
@@ -203,6 +337,13 @@ class APTAttackEnv(gym.Env if gym is not None else object):  # type: ignore[misc
         self._provenance = ProvenanceState()
         self._step_count = 0
         self._initialize_progress_trackers()
+        
+        # Reset network topology tracking
+        self._compromised_devices.clear()
+        self._previously_compromised.clear()
+        self._initial_entry_device = self._select_entry_point()
+        self._compromised_devices.add(self._initial_entry_device)
+        
         observation = self._build_observation({})
         return observation, {}
 
@@ -236,17 +377,55 @@ class APTAttackEnv(gym.Env if gym is not None else object):  # type: ignore[misc
                 "reason": "locked_stage",
             }
 
-        classification = action.tactic_category or "neutral"
-        if self._dependencies:
-            cls = self._dependencies.classify_tactic(stage_id, action.tactic)
-            if cls:
-                classification = cls
-        if classification == "neutral":
-            normalized = action.tactic.lower()
-            if normalized in self._mandatory_targets.get(stage_id, set()):
-                classification = "mandatory"
-            elif normalized in self._optional_targets.get(stage_id, set()):
-                classification = "optional"
+        if getattr(action, "kind", "policy") == "skip":
+            traits = set(getattr(action, "traits", ()))
+            if stage_id not in self._optional_only_stages:
+                reward_breakdown["utility"] -= 0.5
+                observation = self._build_observation(reward_breakdown)
+                return observation, sum(reward_breakdown.values()), False, truncated, {
+                    "reward_breakdown": reward_breakdown,
+                    "action": action,
+                    "invalid": True,
+                    "reason": "invalid_skip",
+                }
+            self._stage_visit_counts[stage_id] = self._stage_visit_counts.get(stage_id, 0) + 1
+            self._complete_stage(stage_id, reward_breakdown, add_pending=False)
+            final_stage_complete = self._campaign_final_stage in self._completed_stages
+            observation = self._build_observation(reward_breakdown)
+            info = {
+                "reward_breakdown": reward_breakdown,
+                "action": action,
+                "classification": "skip",
+                "traits": tuple(sorted(traits)),
+                "episode_complete": final_stage_complete,
+                "skipped_optional_stage": True,
+            }
+            return observation, sum(reward_breakdown.values()), final_stage_complete, truncated, info
+
+        traits = set(getattr(action, "traits", ()))
+        tactic_name_lower = action.tactic.lower()
+        if tactic_name_lower in self._critical_tactics:
+            traits.add("critical")
+        if tactic_name_lower in self._movement_tactics:
+            traits.add("movement")
+
+        classification = self._tactic_classification.get(
+            tactic_name_lower, action.tactic_category or "neutral"
+        )
+        parent_stage = self._stage_parent_map.get(stage_id)
+
+        if not getattr(action, "supports_technique", True):
+            reward_breakdown["utility"] -= 0.5
+            observation = self._build_observation(reward_breakdown)
+            return observation, sum(reward_breakdown.values()), False, truncated, {
+                "reward_breakdown": reward_breakdown,
+                "action": action,
+                "invalid": True,
+                "reason": "unsupported_target",
+            }
+
+        if "critical" in traits and tactic_name_lower != "impact":
+            self._unlock_impact_stage(reward_breakdown)
 
         self._stage_visit_counts[stage_id] = self._stage_visit_counts.get(stage_id, 0) + 1
 
@@ -262,8 +441,21 @@ class APTAttackEnv(gym.Env if gym is not None else object):  # type: ignore[misc
                 "invalid": True,
                 "error": str(exc),
             }
+        
+        # Mark target device as compromised
+        if action.target_device not in self._previously_compromised:
+            self._previously_compromised.add(action.target_device)
+            reward_breakdown["utility"] += 0.2  # Small bonus for expanding attack surface
+        self._compromised_devices.add(action.target_device)
 
-        self._register_tactic_completion(stage_id, action.tactic, classification, reward_breakdown)
+        self._register_tactic_completion(
+            stage_id,
+            action.tactic,
+            classification,
+            reward_breakdown,
+            traits,
+            action.target_device,
+        )
 
         if not truncated:
             stagnation_penalty = self._stage_stagnation_penalty()
@@ -277,6 +469,7 @@ class APTAttackEnv(gym.Env if gym is not None else object):  # type: ignore[misc
             "reward_breakdown": reward_breakdown,
             "action": action,
             "classification": classification,
+            "traits": tuple(sorted(traits)),
             "episode_complete": final_stage_complete,
         }
         return observation, reward, final_stage_complete, truncated, info
@@ -294,7 +487,10 @@ class APTAttackEnv(gym.Env if gym is not None else object):  # type: ignore[misc
         action: AttackMacroAction,
         reward_breakdown: Dict[str, float],
     ) -> None:
-        technique_instances = self._instance_library.instances_for(action.technique_id)
+        platform = self._device_platform(action.target_device)
+        technique_instances = self._instance_library.instances_for(
+            action.technique_id, platform=platform
+        )
         made_progress = False
         for triple in policy.triples:
             subject_node = self._instantiate_entity(triple.subject, action, technique_instances)
@@ -313,7 +509,7 @@ class APTAttackEnv(gym.Env if gym is not None else object):  # type: ignore[misc
             made_progress = True
 
         if policy.key.stage == self._campaign_final_stage:
-            reward_breakdown["utility"] += 1.0
+            reward_breakdown["utility"] += 1.0 * self._stage_reward_multiplier(policy.key.stage)
         if made_progress:
             self._mark_progress()
 
@@ -323,26 +519,48 @@ class APTAttackEnv(gym.Env if gym is not None else object):  # type: ignore[misc
         tactic: str,
         classification: str,
         reward_breakdown: Dict[str, float],
+        traits: Set[str],
+        target_device: str,
     ) -> None:
         normalized = tactic.lower()
+        parent = self._stage_parent_map.get(stage)
+        parent_key = parent or ""
+        stage_mandatory = self._mandatory_targets.get(parent_key, set())
+        stage_optional = self._optional_targets.get(parent_key, set())
+        effective_optional = stage_optional
+        mandatory_targets = stage_mandatory
+        has_mandatory = bool(mandatory_targets)
+        optional_only_stage = stage in self._optional_only_stages
+        is_critical = "critical" in traits or normalized in self._critical_tactics
+        is_impact = normalized == "impact"
+        reward_factor = self._stage_reward_multiplier(stage)
         if classification == "mandatory":
-            targets = self._mandatory_targets.get(stage, set())
+            targets = mandatory_targets
             if not targets:
                 self._complete_stage(stage, reward_breakdown, add_pending=False)
                 return
-            progress = self._mandatory_progress.setdefault(stage, set())
+            progress = self._mandatory_progress.setdefault(parent_key, set())
             if normalized not in progress:
                 progress.add(normalized)
-                reward_breakdown["utility"] += self._mandatory_tactic_reward
+                reward_breakdown["utility"] += self._mandatory_tactic_reward * reward_factor
                 self._mark_progress()
             if targets.issubset(progress):
                 self._complete_stage(stage, reward_breakdown, add_pending=True)
         elif classification == "optional":
-            progress = self._optional_progress.setdefault(stage, set())
+            progress = self._optional_progress.setdefault(parent_key, set())
             if normalized not in progress:
                 progress.add(normalized)
-                reward_breakdown["utility"] += self._optional_tactic_reward
+                reward_breakdown["utility"] += self._optional_tactic_reward * reward_factor
                 self._mark_progress()
+            if not has_mandatory:
+                if optional_only_stage or not effective_optional:
+                    self._complete_stage(stage, reward_breakdown, add_pending=True)
+                elif effective_optional.issubset(progress):
+                    self._complete_stage(stage, reward_breakdown, add_pending=True)
+        if is_critical and not is_impact:
+            self._unlock_impact_stage(reward_breakdown)
+        if is_impact:
+            self._complete_stage(stage, reward_breakdown, add_pending=True)
 
     def _complete_stage(
         self,
@@ -353,10 +571,17 @@ class APTAttackEnv(gym.Env if gym is not None else object):  # type: ignore[misc
         if stage in self._completed_stages:
             return
         self._completed_stages.add(stage)
+        stage_index = self._tactic_index_map.get(stage)
+        if stage_index is not None:
+            self._available_indices.discard(stage_index)
         if add_pending:
             if reward_breakdown is not None:
-                reward_breakdown["structure"] += self._stage_completion_bonus
+                reward_breakdown["structure"] += (
+                    self._stage_completion_bonus * self._stage_reward_multiplier(stage)
+                )
             self._pending_stage_completion[stage] = self._pending_stage_completion.get(stage, 0) + 1
+        if stage == self._campaign_final_stage and reward_breakdown is not None:
+            reward_breakdown["utility"] += self._impact_bonus
         self._mark_progress()
         self._advance_after_completion(stage, reward_breakdown)
 
@@ -386,13 +611,27 @@ class APTAttackEnv(gym.Env if gym is not None else object):  # type: ignore[misc
         stage: int,
         reward_breakdown: Optional[Dict[str, float]],
     ) -> None:
-        if stage in self._completed_stages:
-            return
-        targets = self._mandatory_targets.get(stage, set())
+        parent = self._stage_parent_map.get(stage)
+        targets = self._mandatory_targets.get(parent or "", set())
         if targets:
             return
-        self._completed_stages.add(stage)
-        self._advance_after_completion(stage, reward_breakdown)
+        stage_index = self._tactic_index_map.get(stage)
+        if stage_index is None:
+            return
+        self._available_indices.add(stage_index)
+        if stage not in self._optional_only_stages and stage not in self._completed_stages:
+            # Legacy behavior: auto-complete only when the stage has neither stage-level
+            # nor parent-level mandates and is not flagged as player-controllable optional.
+            self._complete_stage(stage, reward_breakdown=None, add_pending=False)
+
+    def _unlock_impact_stage(self, reward_breakdown: Optional[Dict[str, float]]) -> None:
+        unlocked = False
+        for idx in self._impact_indices:
+            if idx not in self._available_indices:
+                self._available_indices.add(idx)
+                unlocked = True
+        if unlocked and reward_breakdown is not None:
+            reward_breakdown["temporal"] += self._stage_transition_bonus
 
     def _unlocked_stages(self) -> Tuple[int, ...]:
         return tuple(self._active_tactic_ids[idx] for idx in sorted(self._available_indices))
@@ -404,7 +643,8 @@ class APTAttackEnv(gym.Env if gym is not None else object):  # type: ignore[misc
         return self._active_tactic_ids[-1]
 
     def requires_mandatory_completion(self, stage: int) -> bool:
-        return bool(self._mandatory_targets.get(stage, set()))
+        parent = self._stage_parent_map.get(stage)
+        return bool(self._mandatory_targets.get(parent or "", set()))
 
     def _stage_stagnation_penalty(self) -> float:
         if self._stage_step_counter <= self._stage_patience:
@@ -448,14 +688,27 @@ class APTAttackEnv(gym.Env if gym is not None else object):  # type: ignore[misc
     def _build_observation(self, reward_breakdown: Dict[str, float]) -> AttackObservation:
         mask_stages = self._unlocked_stages()
         if len(mask_stages) == 1:
-            mask = self._action_space_helper.mask_for_stage(mask_stages[0])
+            base_mask = self._action_space_helper.mask_for_stage(mask_stages[0])
         else:
-            mask = self._action_space_helper.mask_for_stages(mask_stages)
+            base_mask = self._action_space_helper.mask_for_stages(mask_stages)
+        
+        # Apply reachability constraints
+        action_mask_values = list(base_mask.values)
+        for idx, action in enumerate(self._action_space_helper.all_actions()):
+            if not action_mask_values[idx]:
+                continue  # Already masked, skip
+            
+            # Check if target device is reachable
+            if not self._is_device_reachable(action.target_device, action.technique_id):
+                action_mask_values[idx] = False
+        
+        final_mask = ActionMask.from_actions(action_mask_values)
+        
         return AttackObservation(
             topology=self._topology,
             provenance=self._provenance,
             stage=self._current_focus_stage(),
             step_count=self._step_count,
-            action_mask=mask,
+            action_mask=final_mask,
             reward_breakdown=dict(reward_breakdown),
         )

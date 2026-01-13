@@ -7,19 +7,26 @@
       "name": "Influent Pump PLC",
       "device_type": "PLC",
       "ip_address": "10.1.1.10",
-      "neighbors": ["influent_hmi", "clarifier_plc"],
+      "neighbors": [
+        "influent_hmi",
+        "clarifier_plc"
+      ],
       "connections": [
         {
           "target": "influent_hmi",
           "segment": "Level 1 pump control loop",
-          "protocols": ["Modbus/TCP"],
+          "protocols": [
+            "Modbus/TCP"
+          ],
           "direction": "bidirectional",
           "notes": "Supervisory control of influent pump rates."
         },
         {
           "target": "clarifier_plc",
           "segment": "Level 1 interlock ring",
-          "protocols": ["Modbus/TCP"],
+          "protocols": [
+            "Modbus/TCP"
+          ],
           "direction": "bidirectional",
           "notes": "Clarifier pump coordination."
         }
@@ -29,7 +36,30 @@
           "cve_id": "CVE-2019-10934",
           "cvss_base": 8.1,
           "epss": 0.29,
-          "mapped_techniques": ["T0810", "T0820"]
+          "mapped_techniques": [
+            "T0810",
+            "T0820"
+          ]
+        },
+        {
+          "cve_id": "SYNTH-PLC-IMPACT",
+          "cvss_base": 9.8,
+          "epss": 0.9,
+          "mapped_techniques": [
+            "T1565",
+            "T1561",
+            "T1495",
+            "T1486",
+            "T1485",
+            "T1491",
+            "T1531",
+            "T1499",
+            "T1498",
+            "T1496",
+            "T1490",
+            "T1489",
+            "T1529"
+          ]
         }
       ]
     },
@@ -38,19 +68,27 @@
       "name": "Influent HMI",
       "device_type": "HMI",
       "ip_address": "10.1.1.20",
-      "neighbors": ["influent_plc", "control_room_ws"],
+      "neighbors": [
+        "influent_plc",
+        "control_room_ws"
+      ],
       "connections": [
         {
           "target": "influent_plc",
           "segment": "Level 1 pump control loop",
-          "protocols": ["Modbus/TCP"],
+          "protocols": [
+            "Modbus/TCP"
+          ],
           "direction": "bidirectional",
           "notes": "Operator visibility and manual overrides."
         },
         {
           "target": "control_room_ws",
           "segment": "Level 2 operations LAN",
-          "protocols": ["SMB", "RDP"],
+          "protocols": [
+            "SMB",
+            "RDP"
+          ],
           "direction": "bidirectional",
           "notes": "Recipe deployment and alarm acknowledgement."
         }
@@ -60,7 +98,30 @@
           "cve_id": "CVE-2022-31813",
           "cvss_base": 8.6,
           "epss": 0.51,
-          "mapped_techniques": ["T0829", "T0889"]
+          "mapped_techniques": [
+            "T0829",
+            "T0889"
+          ]
+        },
+        {
+          "cve_id": "SYNTH-EXECUTION",
+          "cvss_base": 9.0,
+          "epss": 0.85,
+          "mapped_techniques": [
+            "T1047",
+            "T1053",
+            "T1059",
+            "T1072",
+            "T1106",
+            "T1129",
+            "T1203",
+            "T1204",
+            "T1559",
+            "T1569",
+            "T1609",
+            "T1610",
+            "T1651"
+          ]
         }
       ]
     },
@@ -69,26 +130,36 @@
       "name": "Clarifier PLC",
       "device_type": "PLC",
       "ip_address": "10.1.2.10",
-      "neighbors": ["influent_plc", "control_room_ws", "filter_plc"],
+      "neighbors": [
+        "influent_plc",
+        "control_room_ws",
+        "filter_plc"
+      ],
       "connections": [
         {
           "target": "influent_plc",
           "segment": "Level 1 interlock ring",
-          "protocols": ["Modbus/TCP"],
+          "protocols": [
+            "Modbus/TCP"
+          ],
           "direction": "bidirectional",
           "notes": "Coordinated sedimentation control."
         },
         {
           "target": "control_room_ws",
           "segment": "Level 2 operations LAN",
-          "protocols": ["OPC UA"],
+          "protocols": [
+            "OPC UA"
+          ],
           "direction": "outbound",
           "notes": "Process data streaming to control room."
         },
         {
           "target": "filter_plc",
           "segment": "Level 1 interlock ring",
-          "protocols": ["Modbus/TCP"],
+          "protocols": [
+            "Modbus/TCP"
+          ],
           "direction": "bidirectional",
           "notes": "Clarifier-filter step synchronization."
         }
@@ -98,7 +169,29 @@
           "cve_id": "CVE-2021-33012",
           "cvss_base": 7.8,
           "epss": 0.42,
-          "mapped_techniques": ["T0830"]
+          "mapped_techniques": [
+            "T0830"
+          ]
+        },
+        {
+          "cve_id": "SYNTH-PLC-IMPACT",
+          "cvss_base": 9.8,
+          "epss": 0.9,
+          "mapped_techniques": [
+            "T1565",
+            "T1561",
+            "T1495",
+            "T1486",
+            "T1485",
+            "T1491",
+            "T1531",
+            "T1499",
+            "T1498",
+            "T1496",
+            "T1490",
+            "T1489",
+            "T1529"
+          ]
         }
       ]
     },
@@ -107,19 +200,26 @@
       "name": "Filtration PLC",
       "device_type": "PLC",
       "ip_address": "10.1.3.10",
-      "neighbors": ["clarifier_plc", "filter_hmi"],
+      "neighbors": [
+        "clarifier_plc",
+        "filter_hmi"
+      ],
       "connections": [
         {
           "target": "clarifier_plc",
           "segment": "Level 1 interlock ring",
-          "protocols": ["Modbus/TCP"],
+          "protocols": [
+            "Modbus/TCP"
+          ],
           "direction": "bidirectional",
           "notes": "Filter inflow coordination."
         },
         {
           "target": "filter_hmi",
           "segment": "Level 1 filter control loop",
-          "protocols": ["Modbus/TCP"],
+          "protocols": [
+            "Modbus/TCP"
+          ],
           "direction": "bidirectional",
           "notes": "Local filter monitoring."
         }
@@ -129,7 +229,29 @@
           "cve_id": "CVE-2020-6997",
           "cvss_base": 7.5,
           "epss": 0.18,
-          "mapped_techniques": ["T0826"]
+          "mapped_techniques": [
+            "T0826"
+          ]
+        },
+        {
+          "cve_id": "SYNTH-PLC-IMPACT",
+          "cvss_base": 9.8,
+          "epss": 0.9,
+          "mapped_techniques": [
+            "T1565",
+            "T1561",
+            "T1495",
+            "T1486",
+            "T1485",
+            "T1491",
+            "T1531",
+            "T1499",
+            "T1498",
+            "T1496",
+            "T1490",
+            "T1489",
+            "T1529"
+          ]
         }
       ]
     },
@@ -138,19 +260,27 @@
       "name": "Filtration HMI",
       "device_type": "HMI",
       "ip_address": "10.1.3.20",
-      "neighbors": ["filter_plc", "control_room_ws"],
+      "neighbors": [
+        "filter_plc",
+        "control_room_ws"
+      ],
       "connections": [
         {
           "target": "filter_plc",
           "segment": "Level 1 filter control loop",
-          "protocols": ["Modbus/TCP"],
+          "protocols": [
+            "Modbus/TCP"
+          ],
           "direction": "bidirectional",
           "notes": "Media backwash control and local alarm display."
         },
         {
           "target": "control_room_ws",
           "segment": "Level 2 operations LAN",
-          "protocols": ["RDP", "SMB"],
+          "protocols": [
+            "RDP",
+            "SMB"
+          ],
           "direction": "bidirectional",
           "notes": "Patch deployment and centralized supervision."
         }
@@ -160,7 +290,30 @@
           "cve_id": "CVE-2021-42237",
           "cvss_base": 9.0,
           "epss": 0.77,
-          "mapped_techniques": ["T0813", "T0889"]
+          "mapped_techniques": [
+            "T0813",
+            "T0889"
+          ]
+        },
+        {
+          "cve_id": "SYNTH-EXECUTION",
+          "cvss_base": 9.0,
+          "epss": 0.85,
+          "mapped_techniques": [
+            "T1047",
+            "T1053",
+            "T1059",
+            "T1072",
+            "T1106",
+            "T1129",
+            "T1203",
+            "T1204",
+            "T1559",
+            "T1569",
+            "T1609",
+            "T1610",
+            "T1651"
+          ]
         }
       ]
     },
@@ -179,28 +332,38 @@
         {
           "target": "influent_hmi",
           "segment": "Level 2 operations LAN",
-          "protocols": ["SMB", "RDP"],
+          "protocols": [
+            "SMB",
+            "RDP"
+          ],
           "direction": "bidirectional",
           "notes": "Operator oversight and remote access."
         },
         {
           "target": "clarifier_plc",
           "segment": "Level 2 operations LAN",
-          "protocols": ["OPC UA"],
+          "protocols": [
+            "OPC UA"
+          ],
           "direction": "bidirectional",
           "notes": "Historian data collection."
         },
         {
           "target": "filter_hmi",
           "segment": "Level 2 operations LAN",
-          "protocols": ["RDP"],
+          "protocols": [
+            "RDP"
+          ],
           "direction": "bidirectional",
           "notes": "Maintenance interface."
         },
         {
           "target": "scada_server",
           "segment": "Level 2 to Level 3 conduit",
-          "protocols": ["OPC UA", "HTTPS"],
+          "protocols": [
+            "OPC UA",
+            "HTTPS"
+          ],
           "direction": "bidirectional",
           "notes": "SCADA supervisory functions."
         }
@@ -210,7 +373,30 @@
           "cve_id": "CVE-2022-38023",
           "cvss_base": 7.8,
           "epss": 0.47,
-          "mapped_techniques": ["T0849", "T0865"]
+          "mapped_techniques": [
+            "T0849",
+            "T0865"
+          ]
+        },
+        {
+          "cve_id": "SYNTH-EXECUTION",
+          "cvss_base": 9.0,
+          "epss": 0.85,
+          "mapped_techniques": [
+            "T1047",
+            "T1053",
+            "T1059",
+            "T1072",
+            "T1106",
+            "T1129",
+            "T1203",
+            "T1204",
+            "T1559",
+            "T1569",
+            "T1609",
+            "T1610",
+            "T1651"
+          ]
         }
       ]
     },
@@ -219,19 +405,28 @@
       "name": "SCADA Server",
       "device_type": "SCADA",
       "ip_address": "10.1.5.10",
-      "neighbors": ["control_room_ws", "corporate_gateway"],
+      "neighbors": [
+        "control_room_ws",
+        "corporate_gateway"
+      ],
       "connections": [
         {
           "target": "control_room_ws",
           "segment": "Level 3 supervisory network",
-          "protocols": ["OPC UA", "HTTPS"],
+          "protocols": [
+            "OPC UA",
+            "HTTPS"
+          ],
           "direction": "bidirectional",
           "notes": "Centralized supervision and historian services."
         },
         {
           "target": "corporate_gateway",
           "segment": "Level 3 to Level 4 conduit",
-          "protocols": ["HTTPS", "SQL"],
+          "protocols": [
+            "HTTPS",
+            "SQL"
+          ],
           "direction": "outbound",
           "notes": "Reporting and dashboard distribution."
         }
@@ -241,7 +436,31 @@
           "cve_id": "CVE-2021-44228",
           "cvss_base": 10.0,
           "epss": 0.99,
-          "mapped_techniques": ["T0859", "T0843", "T1595"]
+          "mapped_techniques": [
+            "T0859",
+            "T0843",
+            "T1595"
+          ]
+        },
+        {
+          "cve_id": "SYNTH-EXECUTION",
+          "cvss_base": 9.0,
+          "epss": 0.85,
+          "mapped_techniques": [
+            "T1047",
+            "T1053",
+            "T1059",
+            "T1072",
+            "T1106",
+            "T1129",
+            "T1203",
+            "T1204",
+            "T1559",
+            "T1569",
+            "T1609",
+            "T1610",
+            "T1651"
+          ]
         }
       ]
     },
@@ -250,19 +469,27 @@
       "name": "Corporate Gateway",
       "device_type": "Gateway",
       "ip_address": "10.1.6.1",
-      "neighbors": ["scada_server", "corporate_ops"],
+      "neighbors": [
+        "scada_server",
+        "corporate_ops"
+      ],
       "connections": [
         {
           "target": "scada_server",
           "segment": "Level 3 to Level 4 conduit",
-          "protocols": ["HTTPS"],
+          "protocols": [
+            "HTTPS"
+          ],
           "direction": "inbound",
           "notes": "Limited northbound exposure for reporting."
         },
         {
           "target": "corporate_ops",
           "segment": "Level 4 enterprise core",
-          "protocols": ["HTTPS", "SMB"],
+          "protocols": [
+            "HTTPS",
+            "SMB"
+          ],
           "direction": "bidirectional",
           "notes": "Enterprise analytics and patch staging."
         }
@@ -274,12 +501,17 @@
       "name": "Corporate Operations Servers",
       "device_type": "ServerCluster",
       "ip_address": "10.1.6.20",
-      "neighbors": ["corporate_gateway"],
+      "neighbors": [
+        "corporate_gateway"
+      ],
       "connections": [
         {
           "target": "corporate_gateway",
           "segment": "Level 4 enterprise core",
-          "protocols": ["HTTPS", "SMB"],
+          "protocols": [
+            "HTTPS",
+            "SMB"
+          ],
           "direction": "bidirectional",
           "notes": "Business analytics and remote support."
         }
@@ -289,10 +521,13 @@
           "cve_id": "CVE-2023-23397",
           "cvss_base": 9.8,
           "epss": 0.81,
-          "mapped_techniques": ["T1566", "T1204", "T1078"]
+          "mapped_techniques": [
+            "T1566",
+            "T1204",
+            "T1078"
+          ]
         }
       ]
     }
   ]
 }
-

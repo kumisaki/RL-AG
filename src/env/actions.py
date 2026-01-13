@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 from data.dependency_loader import TacticDependencyMap
 from data.models import PolicyDefinition, PolicyKey, TechniqueMapping
@@ -15,10 +15,13 @@ class AttackMacroAction:
     index: int
     stage: int
     tactic: str
-    policy_key: PolicyKey
+    policy_key: Optional[PolicyKey]
     technique_id: str
     target_device: str
     tactic_category: str = "neutral"
+    traits: Tuple[str, ...] = ()
+    supports_technique: bool = True
+    kind: str = "policy"
 
 
 @dataclass
@@ -50,12 +53,36 @@ class MacroActionSpace:
         self._dependencies = dependency_map
         self._techniques_per_policy = techniques_per_policy
         self._targets_per_technique = targets_per_technique
+        self._support_exempt_stages = {1, 2}
+        self._support_exempt_tactics = {"reconnaissance", "resource-development"}
         self._build_action_catalog()
 
     def _build_action_catalog(self) -> None:
         cursor = 0
         for stage in sorted({key.stage for key in self._policy_by_key}):
             stage_actions: List[AttackMacroAction] = []
+            parent_stage = self._dependencies.parent_stage(stage) if self._dependencies else None
+            stage_mandatory: Set[str] = set()
+            stage_optional: Set[str] = set()
+            parent_mandatory: Set[str] = set()
+            parent_optional: Set[str] = set()
+            if self._dependencies:
+                stage_mandatory = {
+                    name.lower() for name in self._dependencies.mandatory_tactics(stage)
+                }
+                stage_optional = {
+                    name.lower() for name in self._dependencies.optional_tactics(stage)
+                }
+                if parent_stage:
+                    parent_mandatory = {
+                        name.lower()
+                        for name in self._dependencies.mandatory_tactics_for_parent(parent_stage)
+                    }
+                    parent_optional = {
+                        name.lower()
+                        for name in self._dependencies.optional_tactics_for_parent(parent_stage)
+                    }
+            optional_only_stage = bool(self._dependencies) and not stage_mandatory
             for policy in self._stage_policies(stage):
                 mapping = self._tech_by_key.get(policy.key)
                 if not mapping:
@@ -65,28 +92,39 @@ class MacroActionSpace:
                     technique_ids = technique_ids[: self._techniques_per_policy]
                 for technique_id in technique_ids:
                     supported_devices = self._topology.devices_supporting(technique_id)
-                    targets = (
-                        [device.device_id for device in supported_devices]
-                        if supported_devices
-                        else list(self._topology.node_ids())
+                    supported_ids = [device.device_id for device in supported_devices]
+                    all_nodes = list(self._topology.node_ids())
+                    tactic_lower = policy.key.tactic.lower()
+                    support_required = (
+                        stage not in self._support_exempt_stages
+                        and tactic_lower not in self._support_exempt_tactics
                     )
+                    targets = supported_ids if support_required else all_nodes
                     if self._targets_per_technique is not None:
                         targets = targets[: self._targets_per_technique]
+                    trait_set: set[str] = set()
+                    if self._dependencies:
+                        if self._dependencies.is_critical_tactic(policy.key.tactic):
+                            trait_set.add("critical")
+                        if self._dependencies.is_movement_tactic(policy.key.tactic):
+                            trait_set.add("movement")
+                    if support_required and not supported_ids:
+                        continue
                     for device_id in targets:
                         category = "neutral"
                         if self._dependencies:
-                            cls = self._dependencies.classify_tactic(stage, policy.key.tactic)
+                            normalized = policy.key.tactic.lower()
+                            cls = self._dependencies.classify_tactic_for_parent(
+                                parent_stage, policy.key.tactic
+                            )
+                            if not cls:
+                                cls = self._dependencies.classify_tactic(stage, policy.key.tactic)
                             if cls:
                                 category = cls
                             else:
-                                normalized = policy.key.tactic.lower()
-                                if normalized in {
-                                    name.lower() for name in self._dependencies.mandatory_tactics(stage)
-                                }:
+                                if normalized in parent_mandatory or normalized in stage_mandatory:
                                     category = "mandatory"
-                                elif normalized in {
-                                    name.lower() for name in self._dependencies.optional_tactics(stage)
-                                }:
+                                elif normalized in parent_optional or normalized in stage_optional:
                                     category = "optional"
                         stage_actions.append(
                             AttackMacroAction(
@@ -97,8 +135,29 @@ class MacroActionSpace:
                                 technique_id=technique_id,
                                 target_device=device_id,
                                 tactic_category=category,
+                                traits=tuple(sorted(trait_set)),
+                                supports_technique=(
+                                    True
+                                    if not support_required
+                                    else bool(supported_ids) and device_id in supported_ids
+                                ),
                             )
                         )
+            if optional_only_stage:
+                stage_actions.append(
+                    AttackMacroAction(
+                        index=cursor + len(stage_actions),
+                        stage=stage,
+                        tactic=f"Skip Optional Stage {stage}",
+                        policy_key=None,
+                        technique_id="__SKIP__",
+                        target_device="*",
+                        tactic_category="optional",
+                        traits=("skip",),
+                        supports_technique=True,
+                        kind="skip",
+                    )
+                )
             start = cursor
             cursor += len(stage_actions)
             self._stage_boundaries[stage] = (start, cursor)

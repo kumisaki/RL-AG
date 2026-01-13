@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 
@@ -48,6 +48,11 @@ class PolicyDefinition:
 
     key: PolicyKey
     triples: Tuple[ProvenanceTriple, ...]
+    stage_group: Optional[str] = None
+    tactic_lower: str = field(init=False)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "tactic_lower", self.key.tactic.lower())
 
     def ensure_domain_entities(self, valid_entities: Iterable[str]) -> None:
         """Validate that all entities are part of the recognized alphabet."""
@@ -68,6 +73,11 @@ class TechniqueMapping:
 
     key: PolicyKey
     technique_ids: Tuple[str, ...]
+    stage_group: Optional[str] = None
+    tactic_lower: str = field(init=False)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "tactic_lower", self.key.tactic.lower())
 
 
 @dataclass

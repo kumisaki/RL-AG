@@ -1,19 +1,27 @@
 {
   "tactic_order": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+  "stage_tactic_order": {
+    "stage1": [1, 2, 3, 4],
+    "stage2": [5, 6, 7, 8],
+    "stage3": [9, 10, 11],
+    "stage4": [12, 13, 14]
+  },
   "tactics": {
-    "1": {"mandatory": ["Reconnaissance"], "optional": [], "parent": "stage_1"},
-    "2": {"mandatory": ["Resource-Development"], "optional": [], "parent": "stage_1"},
-    "3": {"mandatory": ["Initial Access"], "optional": [], "parent": "stage_1"},
-    "4": {"mandatory": [], "optional": ["Execution", "Discovery"], "parent": "stage_1"},
-    "5": {"mandatory": [], "optional": ["Execution"], "parent": "stage_2"},
-    "6": {"mandatory": ["Credential Access"], "optional": [], "parent": "stage_2"},
-    "7": {"mandatory": ["Privilege Escalation"], "optional": [], "parent": "stage_2"},
-    "8": {"mandatory": [], "optional": ["Persistence", "Defense Evasion", "Discovery", "Lateral Movement"], "parent": "stage_2"},
-    "9": {"mandatory": [], "optional": ["Execution", "Defense Evasion", "Discovery"], "parent": "stage_3"},
-    "10": {"mandatory": ["Collection"], "optional": [], "parent": "stage_3"},
-    "11": {"mandatory": ["Command and Control"], "optional": [], "parent": "stage_3"},
-    "12": {"mandatory": [], "optional": ["Persistence", "Defense Evasion"], "parent": "stage_4"},
-    "13": {"mandatory": ["Exfiltration"], "optional": [], "parent": "stage_4"},
-    "14": {"mandatory": ["Impact"], "optional": [], "parent": "stage_4"}
-  }
+    "1": {"mandatory": ["1.Reconnaissance"], "optional": [], "parent": "stage1"},
+    "2": {"mandatory": ["2.Resource-Development"], "optional": [], "parent": "stage1"},
+    "3": {"mandatory": ["3.Initial Access"], "optional": [], "parent": "stage1"},
+    "4": {"mandatory": [], "optional": ["4.Execution", "9.Discovery"], "parent": "stage1"},
+    "5": {"mandatory": [], "optional": ["4.Execution"], "parent": "stage2"},
+    "6": {"mandatory": ["8.Credential Access"], "optional": [], "parent": "stage2"},
+    "7": {"mandatory": ["6.Privilege Escalation"], "optional": [], "parent": "stage2"},
+    "8": {"mandatory": [], "optional": ["5.Persistence", "7.Defense Evasion", "9.Discovery", "10.Lateral Movement"], "parent": "stage2"},
+    "9": {"mandatory": [], "optional": ["4.Execution", "7.Defense Evasion", "9.Discovery"], "parent": "stage3"},
+    "10": {"mandatory": ["11.Collection"], "optional": [], "parent": "stage3"},
+    "11": {"mandatory": ["12.Command and Control"], "optional": [], "parent": "stage3"},
+    "12": {"mandatory": [], "optional": ["5.Persistence", "7.Defense Evasion"], "parent": "stage4"},
+    "13": {"mandatory": ["13.Exfiltration"], "optional": [], "parent": "stage4"},
+    "14": {"mandatory": ["14.Impact"], "optional": [], "parent": "stage4"}
+  },
+  "critical_tactics": ["4.Execution", "12.Command and Control", "14.Impact"],
+  "movement_tactics": ["10.Lateral Movement"]
 }

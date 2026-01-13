@@ -6,7 +6,7 @@ import argparse
 import json
 from dataclasses import asdict
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import torch
 from torch.distributions import Categorical
@@ -19,11 +19,44 @@ from data import (
     TacticDependencyMap,
 )
 from data.models import PolicyDefinition
-from env import APTAttackEnv, TopologyGraph
+from env import APTAttackEnv, TopologyGraph, AttackMacroAction
 from env.provenance import ProvenanceEdge, ProvenanceNode
 from models import ActorCriticPolicy, EncoderConfig, PolicyConfig
 from models.features import build_relation_vocab, encode_observation
 from training.config import CurriculumConfig, OptimConfig, TrainingConfig
+
+
+def _safe_checkpoint_load(
+    checkpoint: Path,
+    map_location: str,
+    allow_unsafe: bool,
+) -> Dict[str, Any]:
+    if allow_unsafe:
+        return torch.load(checkpoint, map_location=map_location)
+    try:
+        return torch.load(checkpoint, map_location=map_location, weights_only=True)
+    except TypeError as exc:
+        raise RuntimeError(
+            "Secure checkpoint loading requires torch>=2.0. "
+            "Re-run with --allow-unsafe-checkpoint to fall back to pickle-based torch.load."
+        ) from exc
+
+
+def _load_model_weights(
+    policy_model: ActorCriticPolicy,
+    checkpoint: Path,
+    device: str,
+    allow_unsafe_checkpoint: bool,
+) -> None:
+    payload = _safe_checkpoint_load(checkpoint, map_location=device, allow_unsafe=allow_unsafe_checkpoint)
+    state_dict = payload.get("model_state_dict")
+    if state_dict is None:
+        # Allow checkpoints that store raw state_dict directly.
+        state_dict = payload
+    if not isinstance(state_dict, dict):
+        raise RuntimeError("Checkpoint does not contain a valid model state_dict.")
+    policy_model.load_state_dict(state_dict)
+    policy_model.eval()
 
 
 def _load_components(
@@ -43,6 +76,7 @@ def _load_components(
     ActorCriticPolicy,
     List[PolicyDefinition],
     Dict[str, int],
+    TopologyGraph,
 ]:
     policy_repo = PolicyRepository(data_root)
     technique_repo = TechniqueRepository(data_root)
@@ -72,7 +106,7 @@ def _load_components(
     )
     policy_config = PolicyConfig(encoder=encoder_config, action_dim=env.action_count())
     policy_model = ActorCriticPolicy(policy_config).to(device)
-    return env, policy_model, policies, relation_vocab
+    return env, policy_model, policies, relation_vocab, topology
 
 
 def evaluate_policy(
@@ -90,8 +124,9 @@ def evaluate_policy(
     techniques_per_policy: Optional[int] = 3,
     targets_per_technique: Optional[int] = 5,
     max_steps: int = 200,
+    allow_unsafe_checkpoint: bool = False,
 ) -> Dict[str, float]:
-    env, policy_model, policies, relation_vocab = _load_components(
+    env, policy_model, policies, relation_vocab, _ = _load_components(
         data_root,
         topology,
         device,
@@ -104,9 +139,12 @@ def evaluate_policy(
         targets_per_technique=targets_per_technique,
         max_steps=max_steps,
     )
-    state_dict = torch.load(checkpoint, map_location=device)
-    policy_model.load_state_dict(state_dict["model_state_dict"])
-    policy_model.eval()
+    _load_model_weights(
+        policy_model,
+        checkpoint=checkpoint,
+        device=device,
+        allow_unsafe_checkpoint=allow_unsafe_checkpoint,
+    )
 
     metrics = {
         "episode_rewards": [],
@@ -149,8 +187,11 @@ def generate_attack_paths(
     techniques_per_policy: Optional[int] = 3,
     targets_per_technique: Optional[int] = 5,
     max_steps: int = 200,
+    allow_unsafe_checkpoint: bool = False,
+    top_k: Optional[int] = None,
+    require_plc_impact: bool = False,
 ) -> List[Path]:
-    env, policy_model, policies, relation_vocab = _load_components(
+    env, policy_model, policies, relation_vocab, topology_graph = _load_components(
         data_root,
         topology,
         device,
@@ -163,30 +204,65 @@ def generate_attack_paths(
         targets_per_technique=targets_per_technique,
         max_steps=max_steps,
     )
-    state_dict = torch.load(checkpoint, map_location=device)
-    policy_model.load_state_dict(state_dict["model_state_dict"])
-    policy_model.eval()
+    _load_model_weights(
+        policy_model,
+        checkpoint=checkpoint,
+        device=device,
+        allow_unsafe_checkpoint=allow_unsafe_checkpoint,
+    )
 
     output_dir.mkdir(parents=True, exist_ok=True)
     generated_files: List[Path] = []
 
+    episode_records = []
     for episode_idx in range(episodes):
         episode_result = _run_episode(
             env, policy_model, relation_vocab, device, deterministic=True
         )
         graph_payload = _provenance_to_json(env.provenance_state())
-        output_path = output_dir / f"episode_{episode_idx}.json"
+        impact_device = _detect_plc_impact(episode_result["actions"], topology_graph)
+        episode_records.append(
+            {
+                "episode": episode_result,
+                "graph": graph_payload,
+                "index": episode_idx,
+                "impact_device": impact_device,
+            }
+        )
+
+    selected_records = episode_records
+    if require_plc_impact:
+        selected_records = [record for record in selected_records if record["impact_device"]]
+
+    if top_k is not None:
+        selected_records = sorted(
+            selected_records,
+            key=lambda rec: rec["episode"]["reward"],
+            reverse=True,
+        )[:top_k]
+
+    if not selected_records:
+        print(
+            "No attack paths matched the selection criteria; nothing exported.")
+        return generated_files
+
+    for rank, record in enumerate(selected_records, start=1):
+        episode_result = record["episode"]
+        output_path = output_dir / f"episode_{record['index']}.json"
+        payload = {
+            "reward": episode_result["reward"],
+            "length": episode_result["length"],
+            "techniques": sorted(episode_result["techniques"]),
+            "actions": [asdict(action) for action in episode_result["actions"]],
+            "provenance": record["graph"],
+            "plc_impact": bool(record["impact_device"]),
+        }
+        if record["impact_device"]:
+            payload["impact_device"] = record["impact_device"]
+        if top_k is not None:
+            payload["rank"] = rank
         with output_path.open("w", encoding="utf-8") as handle:
-            json.dump(
-                {
-                    "reward": episode_result["reward"],
-                    "length": episode_result["length"],
-                    "actions": [asdict(action) for action in episode_result["actions"]],
-                    "provenance": graph_payload,
-                },
-                handle,
-                indent=2,
-            )
+            json.dump(payload, handle, indent=2)
         generated_files.append(output_path)
     return generated_files
 
@@ -240,6 +316,30 @@ def _run_episode(
     }
 
 
+def _detect_plc_impact(
+    actions: Iterable[AttackMacroAction],
+    topology: TopologyGraph,
+) -> Optional[Dict[str, str]]:
+    for action in actions:
+        tactic_name = action.tactic.lower()
+        if "impact" not in tactic_name:
+            continue
+        try:
+            device = topology.get_node(action.target_device)
+        except KeyError:
+            continue
+        if device.device_type.lower() != "plc":
+            continue
+        return {
+            "device_id": device.device_id,
+            "device_name": device.name,
+            "device_type": device.device_type,
+            "technique_id": action.technique_id,
+            "tactic": action.tactic,
+        }
+    return None
+
+
 def _provenance_to_json(state) -> Dict[str, object]:
     nodes = []
     for node in state.iter_nodes():
@@ -275,19 +375,36 @@ def build_cli() -> argparse.ArgumentParser:
     parser.add_argument(
         "--topology",
         type=Path,
-        default=Path("data/sample_topologies/chemical_park_central.json"),
+        default=Path("data/sample_topologies/chemical_plant.json"),
     )
     parser.add_argument("--device", type=str, default="cpu")
     parser.add_argument("--episodes", type=int, default=10)
     parser.add_argument("--hidden-dim", type=int, default=256)
     parser.add_argument("--num-layers", type=int, default=3)
     parser.add_argument("--export-dir", type=Path, default=None)
-    parser.add_argument("--stage-patience", type=int, default=8)
+    parser.add_argument("--stage-patience", type=int, default=16)
     parser.add_argument("--stage-completion-bonus", type=float, default=5.0)
     parser.add_argument("--stage-transition-bonus", type=float, default=1.0)
     parser.add_argument("--techniques-per-policy", type=int, default=3)
     parser.add_argument("--targets-per-technique", type=int, default=5)
     parser.add_argument("--max-steps", type=int, default=200)
+    parser.add_argument(
+        "--top-k",
+        type=int,
+        default=None,
+        help="Only export the top-K attack paths by reward (after optional filtering).",
+    )
+    parser.add_argument(
+        "--require-plc-impact",
+        action="store_true",
+        help="Only export attack paths that reach an impact action against a PLC device.",
+    )
+    parser.add_argument(
+        "--allow-unsafe-checkpoint",
+        action="store_true",
+        help="Permit legacy torch.load behaviour (executes pickle). "
+        "Secure checkpoint loading is used by default.",
+    )
     return parser
 
 
@@ -308,6 +425,7 @@ def main() -> None:
         techniques_per_policy=args.techniques_per_policy,
         targets_per_technique=args.targets_per_technique,
         max_steps=args.max_steps,
+        allow_unsafe_checkpoint=args.allow_unsafe_checkpoint,
     )
     print(json.dumps(summary, indent=2))
     if args.export_dir:
@@ -326,6 +444,9 @@ def main() -> None:
             techniques_per_policy=args.techniques_per_policy,
             targets_per_technique=args.targets_per_technique,
             max_steps=args.max_steps,
+            allow_unsafe_checkpoint=args.allow_unsafe_checkpoint,
+            top_k=args.top_k,
+            require_plc_impact=args.require_plc_impact,
         )
         print(f"Exported {len(files)} attack paths to {args.export_dir}")
 

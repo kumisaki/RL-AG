@@ -31,6 +31,7 @@ class DeviceNode:
     name: str
     device_type: str
     ip_address: Optional[str]
+    platform: Optional[str]
     neighbors: Tuple[str, ...]
     connections: Tuple[DeviceConnection, ...]
     vulnerabilities: Tuple[VulnerabilityRecord, ...] = ()
@@ -90,6 +91,7 @@ def _parse_device_node(node_dict: Mapping[str, object]) -> DeviceNode:
         name=node_dict.get("name", node_dict["device_id"]),
         device_type=node_dict.get("device_type", "Unknown"),
         ip_address=node_dict.get("ip_address"),
+        platform=node_dict.get("platform"),
         neighbors=tuple(node_dict.get("neighbors", [])),
         connections=tuple(_parse_connection(c) for c in connections_data),
         vulnerabilities=tuple(_parse_vulnerability(v) for v in vulnerabilities_data),
@@ -113,4 +115,3 @@ def _parse_vulnerability(vuln_dict: Mapping[str, object]) -> VulnerabilityRecord
         epss=float(vuln_dict.get("epss", 0.0)),
         mapped_techniques=tuple(vuln_dict.get("mapped_techniques", [])),
     )
-
